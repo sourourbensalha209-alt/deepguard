@@ -1,0 +1,6 @@
+# Outils du projet : versionnage des données (DVC), téléchargement Kaggle, tests, lint.
+dvc==3.67.1
+kaggle==2.2.5
+pytest==9.2.0
+ruff==0.17.3
+nbformat

@@ -1,0 +1,455 @@
+% =====================================================================
+%  Rapport de Projet - Deep Learning Avance - TEK-UP University
+%  Sujet : DeepGuard - Detection de visages generes par IA (Deepfake)
+%  Auteurs : Sourour Ben Salha & Ghaith Aouissaoui
+%  Compilation : pdflatex main.tex (2 fois) -- ou Overleaf
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,headheight=14pt]{geometry}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs,tabularx,multirow}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc,babel}
+\usepackage[hidelinks]{hyperref}
+\usepackage{float}
+
+% ---------------- Couleurs (inspirees du logo TEK-UP) ----------------
+\definecolor{primaire}{HTML}{1E2A78}
+\definecolor{secondaire}{HTML}{2E6DB4}
+\definecolor{accent}{HTML}{C0392B}
+\definecolor{vert}{HTML}{1E8449}
+\definecolor{orange}{HTML}{D35400}
+\definecolor{violet}{HTML}{6C3483}
+\definecolor{grisclair}{HTML}{F4F6F8}
+\definecolor{grismoyen}{HTML}{BFC5CC}
+\definecolor{codebg}{HTML}{F7F7F9}
+
+% ---------------- Informations ----------------
+\newcommand{\nomprojet}{DeepGuard}
+\newcommand{\etudiantA}{Sourour \textsc{Ben Salha}}
+\newcommand{\etudiantB}{Ghaith \textsc{Aouissaoui}}
+\newcommand{\enseignant}{M. Haythem \textsc{Ghazouani}}
+
+% ---------------- Mise en forme ----------------
+\titleformat{\section}{\Large\sffamily\bfseries\color{primaire}}{\thesection}{0.8em}{}[{\color{primaire}\titlerule[0.6pt]}]
+\titleformat{\subsection}{\large\sffamily\bfseries\color{secondaire}}{\thesubsection}{0.8em}{}
+\titlespacing*{\section}{0pt}{18pt}{10pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\color{primaire}\textbf{Deep Learning Avancé} | \nomprojet}
+\fancyhead[R]{\small\sffamily\color{gray}TEK-UP University}
+\fancyfoot[L]{\small\sffamily\color{gray}\etudiantA{} \& \etudiantB}
+\fancyfoot[R]{\small\sffamily\color{primaire}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\captionsetup{font=small,labelfont={bf,color=primaire}}
+\setlength{\parskip}{5pt}
+\setlength{\parindent}{0pt}
+
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\footnotesize,
+  frame=single,rulecolor=\color{grismoyen},breaklines=true,columns=fullflexible,
+  keepspaces=true,showstringspaces=false}
+
+\newtcolorbox{encadre}[2][]{enhanced,colback=grisclair,colframe=#2,
+  fonttitle=\sffamily\bfseries,coltitle=white,arc=2mm,boxrule=0.8pt,#1}
+
+\tikzset{
+  bloc/.style={draw=#1,fill=#1!10,rounded corners=3pt,thick,align=center,
+               font=\small\sffamily,minimum height=1cm,text width=2.6cm},
+  bloc/.default=secondaire,
+  fleche/.style={-{Stealth[length=2.5mm]},thick,color=#1},
+  fleche/.default=primaire,
+  etiquette/.style={font=\scriptsize\sffamily,color=#1,fill=white,inner sep=1pt},
+  etiquette/.default=gray,
+}
+
+\begin{document}
+
+% =====================================================================
+%  PAGE DE GARDE
+% =====================================================================
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[primaire] (current page.north west) rectangle ([yshift=-0.6cm]current page.north east);
+  \fill[secondaire] ([yshift=-0.6cm]current page.north west) rectangle ([yshift=-0.75cm]current page.north east);
+  \fill[primaire] (current page.south west) rectangle ([yshift=0.6cm]current page.south east);
+\end{tikzpicture}
+\centering
+\vspace*{0.3cm}
+
+\includegraphics[width=7cm]{logo.png}
+
+\vspace{0.8cm}
+{\normalsize\sffamily Cycle Ingénieur en Intelligence Artificielle \& Data Science --- 3\textsuperscript{ème} année}
+
+\vspace{1.8cm}
+{\large\sffamily\color{secondaire} RAPPORT DE PROJET DE MODULE}\\[0.2cm]
+{\Large\sffamily\bfseries Deep Learning Avancé}
+
+\vspace{1.4cm}
+% ---------------- Sujet entre deux barres ----------------
+{\color{primaire}\rule{\linewidth}{1.6pt}}\\[0.5cm]
+{\huge\sffamily\bfseries\color{primaire} \nomprojet}\\[0.35cm]
+{\LARGE\sffamily\bfseries Détection de Visages Générés par IA\\[0.15cm] (Deepfake : Real vs Fake Faces)}\\[0.4cm]
+{\color{primaire}\rule{\linewidth}{1.6pt}}
+
+\vfill
+
+\begin{minipage}[t]{0.48\textwidth}
+  \raggedright
+  {\sffamily\bfseries\color{primaire} Réalisé par :}\\[0.2cm]
+  {\sffamily\large \etudiantA}\\[0.1cm]
+  {\sffamily\large \etudiantB}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \raggedleft
+  {\sffamily\bfseries\color{primaire} Encadré par :}\\[0.2cm]
+  {\sffamily\large \enseignant}
+\end{minipage}
+
+\vspace{1.6cm}
+{\sffamily\large Année universitaire 2026 -- 2027}
+\vspace{0.8cm}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{Introduction}
+% =====================================================================
+
+Les progrès de l'intelligence artificielle générative, en particulier des réseaux antagonistes
+génératifs (GAN) comme StyleGAN, permettent aujourd'hui de créer des visages humains
+photoréalistes de personnes qui n'existent pas. Ces images, appelées \emph{deepfakes}, sont
+souvent impossibles à distinguer de vraies photographies à l'œil nu.
+
+Ce projet, réalisé dans le cadre du module \emph{Deep Learning Avancé}, consiste à développer
+\textbf{\nomprojet}, une application web capable de détecter automatiquement si un visage est
+\textbf{réel} ou \textbf{généré par IA}, d'expliquer sa décision, et d'être déployée comme un
+véritable produit logiciel en suivant les bonnes pratiques MLOps.
+
+% =====================================================================
+\section{Problématique}
+% =====================================================================
+
+La diffusion de visages synthétiques crée des risques concrets :
+\begin{itemize}
+  \item \textbf{Fraude à l'identité} : faux documents, contournement des vérifications en ligne ;
+  \item \textbf{Faux profils} sur les réseaux sociaux, utilisés pour des arnaques ;
+  \item \textbf{Désinformation} : création de faux témoins ou de fausses sources.
+\end{itemize}
+
+Un humain ne peut pas vérifier manuellement des milliers d'images, et les indices de
+falsification (texture de la peau, arrière-plan, reflets dans les yeux, artefacts invisibles)
+sont trop subtils.
+
+\begin{encadre}[title={Problématique}]{primaire}
+Comment concevoir un système de Deep Learning capable de \textbf{distinguer de façon fiable un
+visage réel d'un visage généré par IA}, d'\textbf{expliquer visuellement} sa décision, et de le
+\textbf{mettre à disposition} des utilisateurs à travers une application web rapide, fiable et
+reproductible ?
+\end{encadre}
+
+% =====================================================================
+\section{Objectifs}
+% =====================================================================
+
+\subsection{Objectif général}
+Développer une application complète de détection de deepfakes, depuis la préparation des données
+jusqu'au déploiement conteneurisé.
+
+\subsection{Objectifs spécifiques}
+\begin{enumerate}
+  \item \textbf{Analyser les données} : explorer le jeu de données de visages réels et générés.
+  \item \textbf{Entraîner et comparer des modèles} : une baseline CNN, un CNN pré-entraîné
+        (EfficientNet) et un Vision Transformer (ViT).
+  \item \textbf{Expliquer les prédictions} grâce à des cartes de chaleur (Grad-CAM, Attention Rollout).
+  \item \textbf{Optimiser le modèle} en l'exportant au format ONNX pour une inférence rapide.
+  \item \textbf{Développer une API REST} avec FastAPI pour servir le modèle.
+  \item \textbf{Développer une interface web} avec React (upload d'image, webcam, affichage du résultat).
+  \item \textbf{Industrialiser le projet} : versioning (DVC), suivi des expériences (MLflow),
+        conteneurisation (Docker) et intégration continue (GitHub Actions).
+\end{enumerate}
+
+% =====================================================================
+\section{Description du projet}
+% =====================================================================
+
+\subsection{Principe de fonctionnement}
+L'utilisateur fournit une photo de visage à l'application (par upload, depuis une galerie
+d'exemples ou via la webcam). L'image est envoyée à l'API, qui la prétraite et la transmet au
+modèle de Deep Learning. Le modèle retourne :
+\begin{itemize}
+  \item le \textbf{verdict} : \og RÉEL \fg{} ou \og FAKE \fg{} ;
+  \item la \textbf{probabilité} associée (niveau de confiance) ;
+  \item une \textbf{carte de chaleur} qui montre les zones du visage ayant influencé la décision ;
+  \item le \textbf{temps de réponse} en millisecondes.
+\end{itemize}
+
+\subsection{Jeux de données}
+
+\begin{table}[H]
+\centering
+\caption{Jeux de données utilisés}
+\small
+\begin{tabularx}{\linewidth}{@{}lXX@{}}
+\toprule
+& \textbf{140k Real and Fake Faces} & \textbf{Real and Fake Face Detection} \\
+\midrule
+Source & Kaggle & Kaggle (Yonsei University) \\
+Contenu & 70\,000 visages réels (FFHQ) + 70\,000 visages générés (StyleGAN) &
+1\,081 visages réels + 960 visages retouchés \\
+Résolution & $256\times256$ & $600\times600$ \\
+Découpage & Train 100\,000 / Validation 20\,000 / Test 20\,000 & --- \\
+Utilisation & Entraînement et évaluation & Test de généralisation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Modèles de Deep Learning}
+
+Le projet s'inscrit dans l'\textbf{Axe 4 : Vision Transformers}, avec une comparaison contre une
+baseline CNN.
+
+\begin{table}[H]
+\centering
+\caption{Modèles comparés}
+\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Modèle} & \textbf{Description} \\
+\midrule
+Baseline CNN & Petit réseau convolutif de 4 blocs, entraîné from scratch. Sert de référence. \\
+EfficientNet-V2-S & CNN pré-entraîné sur ImageNet, fine-tuné sur nos données (Transfer Learning). \\
+ViT-B/16 & Vision Transformer : l'image est découpée en patchs de $16\times16$ pixels traités par
+un mécanisme d'auto-attention, ce qui permet de comparer des zones éloignées du visage. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Pour rendre les décisions compréhensibles, nous utilisons \textbf{Grad-CAM} pour les CNN et
+\textbf{Attention Rollout} pour le ViT.
+
+\subsection{Fonctionnalités de l'application}
+\begin{itemize}
+  \item Upload d'image par glisser-déposer ;
+  \item Galerie d'exemples testables en un clic ;
+  \item Capture par webcam ;
+  \item Affichage du verdict, d'une barre de probabilité et de la carte de chaleur ;
+  \item Affichage de la latence côté serveur et côté client ;
+  \item Documentation automatique de l'API (Swagger).
+\end{itemize}
+
+\subsection{Répartition des rôles}
+
+\begin{table}[H]
+\centering
+\caption{Répartition des tâches dans le binôme}
+\small
+\begin{tabularx}{\linewidth}{@{}p{3.8cm}X@{}}
+\toprule
+\textbf{Membre} & \textbf{Responsabilités} \\
+\midrule
+\etudiantA & Deep Learning \& MLOps : données, entraînement, explicabilité, DVC, MLflow, export ONNX. \\
+\etudiantB & Full-Stack \& DevOps : API FastAPI, interface React, Docker, CI/CD GitHub Actions. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\section{Technologies utilisées}
+% =====================================================================
+
+\begin{table}[H]
+\centering
+\caption{Stack technologique du projet}
+\small
+\begin{tabularx}{\linewidth}{@{}llX@{}}
+\toprule
+\textbf{Domaine} & \textbf{Technologie} & \textbf{Rôle dans le projet} \\
+\midrule
+\multirow{3}{*}{Deep Learning} & PyTorch & Construction et entraînement des modèles \\
+ & timm & Modèles pré-entraînés (EfficientNet, ViT) \\
+ & Grad-CAM & Explicabilité des prédictions \\
+\midrule
+\multirow{3}{*}{MLOps} & DVC & Versioning des données et des modèles \\
+ & MLflow & Suivi des expériences et registre des modèles \\
+ & ONNX Runtime & Optimisation et inférence rapide du modèle \\
+\midrule
+\multirow{2}{*}{Backend} & FastAPI & API REST asynchrone \\
+ & Pydantic & Validation des données d'entrée et de sortie \\
+\midrule
+\multirow{2}{*}{Frontend} & React + Vite & Interface web interactive \\
+ & TailwindCSS & Design moderne de l'interface \\
+\midrule
+\multirow{3}{*}{DevOps} & Docker & Conteneurisation des services \\
+ & Docker Compose & Lancement de toute l'application en une commande \\
+ & GitHub Actions & Intégration continue (tests et build automatiques) \\
+\midrule
+Tests & Pytest & Tests unitaires de l'API \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+% =====================================================================
+\section{Architecture du projet}
+% =====================================================================
+
+\subsection{Architecture globale}
+
+L'application est conçue comme un \textbf{système découplé} : chaque composant a un rôle unique
+et communique avec les autres via des interfaces standard. L'ensemble est orchestré par Docker
+Compose.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[every node/.style={font=\small\sffamily}]
+  \node[bloc=primaire,text width=2.3cm] (user) {Utilisateur\\Navigateur web};
+  \node[bloc=secondaire,text width=2.6cm,right=1.6cm of user] (front) {\textbf{Frontend}\\React\\(port 3000)};
+  \node[bloc=secondaire,text width=2.6cm,right=1.6cm of front] (api) {\textbf{API REST}\\FastAPI + Pydantic\\(port 8000)};
+  \node[bloc=vert,text width=2.6cm,below=1.5cm of api] (onnx) {\textbf{Modèle IA}\\ONNX Runtime\\+ Grad-CAM};
+  \node[bloc=violet,text width=2.6cm,left=1.6cm of onnx] (mlflow) {\textbf{MLflow}\\Suivi \& registre\\(port 5000)};
+  \node[bloc=orange,text width=2.3cm,left=1.6cm of mlflow] (dvc) {\textbf{DVC}\\Données \&\\modèles};
+  \node[bloc=accent,text width=2.6cm,below=1.3cm of mlflow] (train) {\textbf{Entraînement}\\PyTorch (GPU)};
+
+  \draw[fleche,{Stealth[length=2.5mm]}-{Stealth[length=2.5mm]}] (user) -- node[etiquette,above]{HTTP} (front);
+  \draw[fleche,{Stealth[length=2.5mm]}-{Stealth[length=2.5mm]}] (front) -- node[etiquette,above]{JSON} (api);
+  \draw[fleche] (api) -- node[etiquette,right]{image} (onnx);
+  \draw[fleche=orange] (dvc) |- node[etiquette,pos=0.75,below]{données} (train);
+  \draw[fleche=violet] (train) -- node[etiquette,right]{métriques} (mlflow);
+  \draw[fleche=violet] (mlflow) -- node[etiquette,below]{meilleur modèle} (onnx);
+
+  \begin{scope}[on background layer]
+    \node[draw=primaire,dashed,rounded corners=6pt,fill=grisclair,inner sep=10pt,
+          fit=(front)(api)(onnx)(mlflow),
+          label={[font=\scriptsize\sffamily\bfseries,color=primaire]above right:Docker Compose}] {};
+  \end{scope}
+\end{tikzpicture}
+\caption{Architecture globale de \nomprojet}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Rôle de chaque composant}
+\small
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+\textbf{Composant} & \textbf{Rôle} \\
+\midrule
+Frontend React & Interface utilisateur : envoi de l'image et affichage du résultat. \\
+API FastAPI & Reçoit l'image, la valide, appelle le modèle et renvoie la réponse en JSON. \\
+Modèle ONNX & Calcule la prédiction et la carte de chaleur. \\
+MLflow & Enregistre les expériences et conserve le meilleur modèle. \\
+DVC & Versionne les données et les poids des modèles en dehors de Git. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Pipeline du projet (MLOps)}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.55cm, every node/.style={font=\scriptsize\sffamily}]
+  \node[bloc=orange,text width=2.1cm] (d1) {\textbf{Données}\\Kaggle};
+  \node[bloc=orange,text width=2.1cm,right=of d1] (d2) {\textbf{DVC}\\versioning};
+  \node[bloc=secondaire,text width=2.1cm,right=of d2] (d3) {\textbf{Préparation}\\nettoyage, split};
+  \node[bloc=accent,text width=2.1cm,right=of d3] (d4) {\textbf{Entraînement}\\PyTorch};
+  \node[bloc=violet,text width=2.1cm,right=of d4] (d5) {\textbf{MLflow}\\suivi des runs};
+  \node[bloc=vert,text width=2.1cm,below=1.1cm of d5] (d6) {\textbf{Export}\\ONNX};
+  \node[bloc=primaire,text width=2.1cm,left=of d6] (d7) {\textbf{API}\\FastAPI};
+  \node[bloc=primaire,text width=2.1cm,left=of d7] (d8) {\textbf{Interface}\\React};
+  \node[bloc=gray,text width=2.1cm,left=of d8] (d9) {\textbf{Docker}\\Compose};
+  \node[bloc=gray,text width=2.1cm,left=of d9] (d10) {\textbf{CI/CD}\\GitHub Actions};
+  \draw[fleche] (d1) -- (d2); \draw[fleche] (d2) -- (d3); \draw[fleche] (d3) -- (d4);
+  \draw[fleche] (d4) -- (d5); \draw[fleche] (d5) -- (d6); \draw[fleche] (d6) -- (d7);
+  \draw[fleche] (d7) -- (d8); \draw[fleche] (d8) -- (d9); \draw[fleche] (d9) -- (d10);
+\end{tikzpicture}
+\caption{Pipeline de bout en bout : des données au déploiement}
+\end{figure}
+
+\subsection{Déroulement d'une prédiction}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[every node/.style={font=\scriptsize\sffamily}]
+  \foreach \x/\nom/\c in {0/Utilisateur/primaire, 3.6/React/secondaire, 7.2/FastAPI/secondaire, 10.8/Modèle ONNX/vert} {
+    \node[bloc=\c,text width=2.2cm,minimum height=0.7cm] at (\x,0) {\textbf{\nom}};
+    \draw[gray,dashed] (\x,-0.4) -- (\x,-5.4);
+  }
+  \draw[fleche] (0,-1.0) -- node[etiquette,above]{1. choisit une image} (3.6,-1.0);
+  \draw[fleche] (3.6,-1.8) -- node[etiquette,above]{2. POST /predict} (7.2,-1.8);
+  \draw[fleche] (7.2,-2.6) -- node[etiquette,above]{3. image prétraitée} (10.8,-2.6);
+  \draw[fleche=vert] (10.8,-3.4) -- node[etiquette,above]{4. probabilités + carte} (7.2,-3.4);
+  \draw[fleche] (7.2,-4.2) -- node[etiquette,above]{5. réponse JSON} (3.6,-4.2);
+  \draw[fleche] (3.6,-5.0) -- node[etiquette,above]{6. verdict affiché} (0,-5.0);
+\end{tikzpicture}
+\caption{Échanges entre les composants lors d'une prédiction}
+\end{figure}
+
+\subsection{Endpoints de l'API}
+
+\begin{table}[H]
+\centering
+\caption{Routes exposées par l'API FastAPI}
+\small
+\begin{tabularx}{\linewidth}{@{}llX@{}}
+\toprule
+\textbf{Méthode} & \textbf{Route} & \textbf{Description} \\
+\midrule
+GET & \texttt{/health} & Vérifie que le serveur et le modèle sont prêts \\
+GET & \texttt{/model/metadata} & Informations sur le modèle (architecture, classes, version) \\
+POST & \texttt{/predict} & Reçoit une image et renvoie le verdict et la probabilité \\
+POST & \texttt{/predict/visualize} & Renvoie le verdict et un calque de chaleur (PNG) à superposer à la photo \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Organisation du dépôt Git}
+
+\begin{lstlisting}
+deepguard/
+|-- .github/workflows/   # CI/CD (tests + build Docker)
+|-- data/                # Donnees suivies par DVC
+|-- src/                 # Code Deep Learning (dataset, modeles, entrainement)
+|-- backend/             # API FastAPI + tests Pytest + Dockerfile
+|-- frontend/            # Application React + Dockerfile
+|-- docker-compose.yml   # Lancement de toute l'application
+|-- dvc.yaml             # Pipeline reproductible
+`-- README.md            # Guide d'installation
+\end{lstlisting}
+
+L'application complète se lance avec une seule commande :
+\texttt{docker compose up --build}.
+
+% =====================================================================
+\section{Conclusion}
+% =====================================================================
+
+Ce projet propose \nomprojet, une solution complète de détection de visages générés par IA. Il
+combine des modèles de Deep Learning avancés (CNN et Vision Transformer), des techniques
+d'explicabilité, et une architecture logicielle professionnelle (FastAPI, React, Docker) avec un
+cycle de vie MLOps (DVC, MLflow, CI/CD).
+
+Comme perspectives, nous envisageons d'entraîner le modèle sur des images issues de modèles de
+diffusion récents, d'étendre la détection aux vidéos, et de déployer l'application sur le cloud.
+
+\end{document}

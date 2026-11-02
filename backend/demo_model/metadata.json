@@ -1,0 +1,12 @@
+{
+  "name": "DeepGuard (démo)",
+  "architecture": "démo : poids aléatoires, non entraîné",
+  "classes": [
+    "fake",
+    "real"
+  ],
+  "input_size": 224,
+  "demo": true,
+  "version": "demo",
+  "note": "Modèle de démonstration : ses prédictions n'ont aucune valeur."
+}

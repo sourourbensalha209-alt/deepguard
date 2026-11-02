@@ -1,0 +1,72 @@
+# Pipeline CI : lint + tests (API, frontend, pipeline ML).
+# Lint Python : ruff (remplace flake8 + black : règles E/F/W/I et formatage compatible black).
+# Lint frontend : oxlint (règles React / ESLint).
+name: CI tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: API (lint + tests pytest)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements*.txt
+      - run: pip install -r requirements-dev.txt
+      - run: ruff check . --config ../ruff.toml
+      - run: ruff format --check . --config ../ruff.toml
+      - run: pytest --cov=app --cov-report=term-missing
+
+  frontend:
+    name: Interface (lint + build)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  pipeline:
+    name: "Pipeline ML (données synthétiques : prepare, train, evaluate, export ONNX, registre MLflow)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            requirements-train.txt
+            requirements-dev.txt
+      - name: PyTorch (CPU)
+        run: pip install torch==2.14.1 torchvision==0.29.2 --index-url https://download.pytorch.org/whl/cpu
+      - run: pip install -r requirements-train.txt pytest ruff
+      - run: ruff check src tests scripts --config ruff.toml
+      - run: ruff format --check src tests scripts --config ruff.toml
+      - run: pytest tests -q

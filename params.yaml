@@ -1,0 +1,17 @@
+# Paramètres du pipeline (suivis par DVC). Modifier ici, puis : dvc repro
+seed: 42
+data_dir: data/raw/real_vs_fake/real-vs-fake            # surcharge possible : variable d'environnement DATA_DIR
+external_dir: data/raw/external/real_and_fake_face      # dossier contenant training_fake/ et training_real/
+
+prepare:
+  train_limit: 20000    # 0 = tout le split (100 000 images)
+  val_limit: 4000       # 0 = tout (20 000)
+  test_limit: 4000      # 0 = tout (20 000)
+
+train:
+  model: efficientnet   # baseline | efficientnet | vit
+  epochs: 3
+  batch_size: 64
+  lr: 0.0001
+  img_size: 224
+  num_workers: 4

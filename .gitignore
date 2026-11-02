@@ -1,0 +1,35 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Secrets (ne jamais commiter)
+.env
+.dvc/config.local
+
+# Node
+node_modules/
+dist/
+
+# MLflow local
+mlruns/
+mlflow-data/
+
+# Données brutes (trop lourdes pour Git, documentées dans le README)
+data/raw/
+
+# Fichiers gérés par DVC (ajoutés automatiquement par dvc, listés ici pour clarté)
+/data/processed
+/checkpoints/best.pt
+/models
+/reports
+
+# Divers
+.DS_Store
+Thumbs.db
+*.log

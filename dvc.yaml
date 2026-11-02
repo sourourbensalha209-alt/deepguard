@@ -1,0 +1,93 @@
+stages:
+  prepare:
+    cmd: python -m src.data.prepare
+    deps:
+      - src/data/prepare.py
+      - src/data/dataset.py
+      - src/utils/config.py
+    params:
+      - seed
+      - prepare
+    outs:
+      - data/processed
+
+  train:
+    cmd: python -m src.models.train
+    deps:
+      - src/models/train.py
+      - src/models/architecture.py
+      - src/data/dataset.py
+      - src/utils/config.py
+      - src/utils/metrics.py
+      - data/processed
+    params:
+      - seed
+      - train
+    outs:
+      - checkpoints/best.pt
+    metrics:
+      - metrics/train.json:
+          cache: false
+
+  evaluate:
+    cmd: python -m src.models.evaluate
+    deps:
+      - src/models/evaluate.py
+      - src/models/architecture.py
+      - src/data/dataset.py
+      - src/utils/config.py
+      - src/utils/metrics.py
+      - checkpoints/best.pt
+      - data/processed
+    params:
+      - train.model
+      - train.img_size
+      - external_dir
+    outs:
+      - reports/confusion_matrix.png
+      - reports/roc_curve.png
+    metrics:
+      - metrics/test.json:
+          cache: false
+
+  explain:
+    cmd: python -m src.utils.gradcam
+    deps:
+      - src/utils/gradcam.py
+      - src/models/architecture.py
+      - src/data/dataset.py
+      - checkpoints/best.pt
+      - data/processed
+    params:
+      - train.model
+      - train.img_size
+    outs:
+      - reports/heatmaps.png
+
+  export:
+    cmd: python -m src.models.export_onnx
+    deps:
+      - src/models/export_onnx.py
+      - src/models/architecture.py
+      - src/utils/quantize.py
+      - checkpoints/best.pt
+    params:
+      - train.model
+      - train.img_size
+    outs:
+      - models
+    metrics:
+      - metrics/export.json:
+          cache: false
+
+  register:
+    # Enregistre le modèle dans le MLflow Model Registry (alias staging / production).
+    # Nécessite MLFLOW_TRACKING_URI (serveur MLflow local ou DagsHub).
+    cmd: python -m src.models.register
+    deps:
+      - src/models/register.py
+      - models/deepguard.onnx
+      - models/metadata.json
+    metrics:
+      - metrics/registry.json:
+          cache: false

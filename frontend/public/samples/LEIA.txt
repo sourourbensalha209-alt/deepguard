@@ -1,0 +1,3 @@
+Place ici 4 images de visages (sample_1.jpg à sample_4.jpg) pour la galerie d'exemples.
+Ne commite pas de photos de personnes réelles sans autorisation : utilise des images du dataset
+(FFHQ / StyleGAN). Le script scripts/export_samples.py copie 2 images réelles et 2 générées.

@@ -1,0 +1,63 @@
+# Lancement :
+#   docker compose up --build                      -> API (8000) + interface (3000)
+#   docker compose --profile mlops up --build      -> + serveur MLflow local (5000)
+#   docker compose --profile monitoring up --build -> + Prometheus (9090) et Grafana (3001)
+name: deepguard
+
+services:
+  backend:
+    build: ./backend
+    image: deepguard-backend
+    ports:
+      - "8000:8000"
+    environment:
+      CORS_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+    volumes:
+      # Modèle entraîné et exporté (models/deepguard.onnx, versionné par DVC).
+      # S'il est absent, l'API charge le modèle de démonstration intégré à l'image.
+      - ./models:/models:ro
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:8000
+    image: deepguard-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mlflow:
+    profiles: ["mlops"]
+    build: ./mlflow
+    image: deepguard-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    restart: unless-stopped
+
+  prometheus:
+    profiles: ["monitoring"]
+    image: prom/prometheus:latest # à figer sur une version précise avant une vraie mise en production
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - backend
+
+  grafana:
+    profiles: ["monitoring"]
+    image: grafana/grafana:latest # idem : figer la version
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  mlflow-data:
