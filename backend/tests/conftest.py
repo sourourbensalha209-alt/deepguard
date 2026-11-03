@@ -2,9 +2,10 @@ import io
 
 import numpy as np
 import pytest
-from app.main import app, get_predictor
 from fastapi.testclient import TestClient
 from PIL import Image
+
+from app.main import app, get_predictor
 
 
 class FakePredictor:

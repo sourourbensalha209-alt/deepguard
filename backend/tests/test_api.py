@@ -66,8 +66,9 @@ def test_heatmap_layer_is_transparent_png():
     import io
 
     import numpy as np
-    from app.inference import heatmap_layer
     from PIL import Image
+
+    from app.inference import heatmap_layer
 
     layer = heatmap_layer((1200, 800), np.random.default_rng(1).random((7, 7)).astype("float32"))
     assert layer.mode == "RGBA"

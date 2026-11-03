@@ -1,6 +1,11 @@
 line-length = 110
 target-version = "py312"
+# `app` (backend/app) et `src` (racine) sont du code du projet, quel que soit le dossier d'où ruff est lancé
+src = ["backend", "."]
 extend-exclude = ["frontend", "docs", "notebooks"]
 
 [lint]
 select = ["E", "F", "W", "I"]
+
+[lint.isort]
+known-first-party = ["app", "src"]
