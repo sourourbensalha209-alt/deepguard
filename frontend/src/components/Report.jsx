@@ -3,6 +3,15 @@ import ProbabilityChart from "./ProbabilityChart";
 const UNSURE_BELOW = 0.65;
 
 function verdictOf(result) {
+  // Sans visage détecté, l'image n'est pas dans le domaine d'entraînement : aucun verdict n'est affiché.
+  if (!result.face_detected) {
+    return {
+      title: "Résultat non fiable",
+      text: "Aucun visage n'a été détecté. Le modèle n'a appris que sur des visages entiers et de face : cadre un seul visage de face pour obtenir un verdict.",
+      tone: "text-caution",
+      unreliable: true,
+    };
+  }
   if (result.confidence < UNSURE_BELOW) {
     return {
       title: "Résultat peu sûr",
@@ -77,7 +86,7 @@ export default function Report({ status, result, error, meta, onReset }) {
       <h2 className={`font-display text-4xl leading-tight font-medium ${v.tone}`}>{v.title}</h2>
       <p className="mt-3 max-w-prose">{v.text}</p>
 
-      <ProbabilityChart probFake={result.prob_fake} />
+      <ProbabilityChart probFake={result.prob_fake} muted={v.unreliable} />
 
       <dl className="mt-8">
         <Row term="Visage détecté">
@@ -93,11 +102,6 @@ export default function Report({ status, result, error, meta, onReset }) {
         <div className="border-t border-rule" />
       </dl>
 
-      {!result.face_detected && (
-        <p className="mt-4 text-sm text-caution">
-          Aucun visage détecté : cadre un visage de face pour un résultat plus fiable.
-        </p>
-      )}
       <p className="mt-4 text-sm text-muted">
         Un modèle peut se tromper, surtout sur des images très différentes de celles de son entraînement.
         N'utilise pas ce résultat seul comme preuve.

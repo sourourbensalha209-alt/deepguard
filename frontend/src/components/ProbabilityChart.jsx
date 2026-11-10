@@ -26,7 +26,7 @@ function Bar({ label, value, tone, shown }) {
 }
 
 /** Scores de probabilité en barres de progression animées. */
-export default function ProbabilityChart({ probFake }) {
+export default function ProbabilityChart({ probFake, muted = false }) {
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
@@ -35,9 +35,16 @@ export default function ProbabilityChart({ probFake }) {
   }, []);
 
   return (
-    <div className="mt-6 space-y-4">
-      <Bar label="Réel" value={1 - probFake} tone="bg-real" shown={shown} />
-      <Bar label="Généré par IA" value={probFake} tone="bg-fake" shown={shown} />
+    <div className="mt-6">
+      <div className={`space-y-4 ${muted ? "opacity-45" : ""}`}>
+        <Bar label="Réel" value={1 - probFake} tone="bg-real" shown={shown} />
+        <Bar label="Généré par IA" value={probFake} tone="bg-fake" shown={shown} />
+      </div>
+      {muted && (
+        <p className="mt-2 text-sm text-caution">
+          Valeurs indicatives : elles ne sont pas fiables sans visage détecté.
+        </p>
+      )}
     </div>
   );
 }
