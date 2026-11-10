@@ -1,0 +1,17 @@
+variante,verdict,prob_generee_pct,visage_detecte
+original,FAKE,99.9,True
+JPEG qualité 75,FAKE,99.6,True
+JPEG qualité 50,FAKE,99.9,True
+JPEG qualité 25,FAKE,99.9,True
+JPEG qualité 10,FAKE,99.5,True
+résolution réduite à 128 px,FAKE,99.9,True
+résolution réduite à 64 px,FAKE,97.6,True
+résolution réduite à 32 px,REAL,12.1,True
+flou gaussien 1,FAKE,99.9,True
+flou gaussien 2,FAKE,99.8,True
+flou gaussien 4,FAKE,99.7,True
+bruit sigma 5,FAKE,99.7,True
+bruit sigma 15,FAKE,99.7,True
+bruit sigma 30,FAKE,99.8,True
+recadrage central 80 %,REAL,0.2,True
+recadrage central 60 %,REAL,0.0,True
