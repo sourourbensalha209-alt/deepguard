@@ -15,3 +15,4 @@ train:
   lr: 0.0001
   img_size: 224
   num_workers: 4
+  augment: basic        # basic | scale (recadrages aléatoires : robustesse au cadrage du visage)

@@ -16,8 +16,17 @@ MEAN = (0.485, 0.456, 0.406)
 STD = (0.229, 0.224, 0.225)
 
 
-def get_transform(size, train=False):
-    ops = [transforms.Resize((size, size))]
+def get_transform(size, train=False, augment="basic"):
+    """Transformations d'image.
+
+    augment="basic" : redimensionnement fixe + retournement + variations de couleur (train uniquement).
+    augment="scale" : en plus, recadrages aléatoires (échelle 50 à 100 % de l'image, léger changement de
+    proportions) pour que le modèle ne dépende pas du cadrage exact du visage. Jamais appliqué hors train.
+    """
+    if train and augment == "scale":
+        ops = [transforms.RandomResizedCrop((size, size), scale=(0.5, 1.0), ratio=(0.85, 1.18))]
+    else:
+        ops = [transforms.Resize((size, size))]
     if train:
         ops += [transforms.RandomHorizontalFlip(), transforms.ColorJitter(0.1, 0.1, 0.1)]
     ops += [transforms.ToTensor(), transforms.Normalize(MEAN, STD)]

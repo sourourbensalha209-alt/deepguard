@@ -26,7 +26,9 @@ def main():
 
     def make_loader(split, train):
         ds = FaceDataset(
-            f"data/processed/{split}.csv", params["data_dir"], get_transform(t["img_size"], train)
+            f"data/processed/{split}.csv",
+            params["data_dir"],
+            get_transform(t["img_size"], train, t.get("augment", "basic")),
         )
         return DataLoader(
             ds,
