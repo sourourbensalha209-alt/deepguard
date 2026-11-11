@@ -33,3 +33,14 @@ data/raw/
 .DS_Store
 Thumbs.db
 *.log
+
+# LaTeX
+docs/rapport/*.aux
+docs/rapport/*.log
+docs/rapport/*.out
+docs/rapport/*.toc
+docs/rapport/*.synctex.gz
+
+# Magasins MLflow locaux (bases SQLite, copies de runs Kaggle)
+*.db
+kaggle_mlflow/

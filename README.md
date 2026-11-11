@@ -16,7 +16,7 @@ Réalisé par Sourour Ben Salha et Ghaith Aouissaoui, encadré par M. Haythem Gh
 
 | Je corrige… | Je regarde | Fichiers |
 |---|---|---|
-| **Deep Learning Avancé** (modélisation, rigueur scientifique, full-stack) | Trois architectures comparées, ViT (patchs, embeddings de position, auto-attention), métriques, explicabilité, export ONNX + quantification, API et interface | `src/`, `params.yaml`, `notebooks/kaggle_train.ipynb`, `backend/`, `frontend/`, `docs/rapport/` |
+| **Deep Learning Avancé** (modélisation, rigueur scientifique, full-stack) | Trois architectures comparées, ViT (patchs, embeddings de position, auto-attention), métriques, explicabilité, export ONNX + quantification, API et interface | `src/`, `params.yaml`, `notebooks/kaggle_train.ipynb`, `backend/`, `frontend/`, `docs/rapport/` (Partie A) |
 | **MLOps** | Pipeline reproductible DVC, suivi MLflow et Model Registry, Docker multi-stage, CI/CD GitHub Actions, tests, monitoring | `dvc.yaml`, `.dvc/`, `src/models/register.py`, `.github/workflows/`, `docker-compose.yml`, `*/Dockerfile`, `mlflow/`, `monitoring/`, `tests/`, `backend/tests/` |
 
 L'historique Git (commits et Pull Requests) montre la contribution de chacun dans les deux parties.
@@ -35,6 +35,9 @@ docker-compose up --build        # ou : docker compose up --build
 Tant qu'aucun modèle entraîné n'existe dans `models/`, l'API charge un **modèle de démonstration aux poids aléatoires**.
 L'interface l'indique par un bandeau : ses résultats n'ont aucune valeur. Il sert à vérifier que toute la chaîne
 fonctionne. Pour de vrais résultats, voir « Entraîner un vrai modèle ».
+
+Avec le modèle entraîné (343 Mo), le chargement de l'API prend jusqu'à 4 minutes : `docker-compose.override.yml` laisse
+ce délai au démarrage (healthcheck) pour que `docker-compose up` ne s'arrête pas trop tôt.
 
 Test de fumée de l'application lancée : `pip install httpx pillow && python scripts/smoke_test.py`.
 
@@ -55,16 +58,16 @@ cd frontend && npm install && npm run dev                # interface sur :3000 (
 |---|---|---|
 | Axe 4 : stratégie de patchification et embeddings de position | ViT-B/16 : grille 14x14 = 196 patchs + token CLS, embeddings de position appris `(1, 197, 768)`, journalisés dans MLflow (`describe_vit`, `src/models/architecture.py`) | Fait |
 | Axe 4 : matrices d'attention (Attention Rollout) affichées dans le frontend | `src/utils/gradcam.py`, exportées DANS l'ONNX (`ViTWithRollout`, sortie `cam`), calque affiché avec curseur de comparaison | Fait (test CI sur ViT tiny) |
-| Benchmark contre une baseline CNN | `notebooks/kaggle_train.ipynb` : baseline CNN, EfficientNet-V2-S, ViT-B/16 | **À exécuter** |
-| Métriques, généralisation | accuracy, F1, ROC-AUC, matrice de confusion, 2e dataset (`src/models/evaluate.py`) | **À exécuter** |
+| Benchmark contre une baseline CNN | `notebooks/kaggle_train.ipynb` : baseline CNN, EfficientNet-V2-S, ViT-B/16 | Fait : test 83,6 % / 97,3 % / **99,6 %** (voir « Résultats ») |
+| Métriques, généralisation | accuracy, F1, ROC-AUC, matrice de confusion, 2e dataset (`src/models/evaluate.py`) | Fait : la généralisation échoue (53 %), limite documentée |
 | Export ONNX + ONNX Runtime, quantification | `src/models/export_onnx.py` : parité PyTorch/ONNX, latence, INT8 (`src/utils/quantize.py`) | Fait (INT8 testé sur le modèle de démo) |
 | FastAPI : `/health` (GPU, version), `/model/metadata`, `/predict`, `/predict/visualize`, Pydantic, 400 / 503 | `backend/app/` | Fait (12 tests) |
 | Frontend : drag & drop, galerie, webcam, barres de probabilité animées, latence client + serveur | `frontend/src/` | Fait. **Galerie : lancer `scripts/export_samples.py`** |
-| DVC : données brutes + checkpoints | `dvc add data/raw` (crée `data/raw.dvc`), `dvc.yaml`, `dvc push` | **À exécuter** (remote DagsHub déclaré) |
+| DVC : données brutes + checkpoints | `dvc add data/raw` (sous-ensemble de 28 000 images utilisé, crée `data/raw.dvc`), `dvc.yaml`, `dvc push` | **À exécuter** (remote DagsHub déclaré) |
 | MLflow : tracking + Model Registry (Staging / Production) | `src/models/train.py`, `src/models/register.py` : alias `staging` et `production` (les « stages » sont dépréciés par MLflow) | Fait (registre testé) |
 | Docker multi-stage + `docker-compose up --build` | `backend/Dockerfile`, `frontend/Dockerfile`, `docker-compose.yml` | Fait (non exécuté dans l'environnement de rédaction : voir la CI) |
-| CI/CD : lint, pytest, build des conteneurs | `.github/workflows/ci-tests.yml`, `docker-build.yml` (ruff remplace flake8 + black, oxlint remplace ESLint) | Fait. **À vérifier : premier run vert** |
-| Rapport LaTeX, README, `rapport_technique.pdf` | `docs/rapport/main.tex`, ce README | **À compléter** avec les résultats |
+| CI/CD : lint, pytest, build des conteneurs | `.github/workflows/ci-tests.yml`, `docker-build.yml` (ruff remplace flake8 + black, oxlint remplace ESLint) | Fait : workflows verts |
+| Rapport LaTeX, README, `rapport_technique.pdf` | `docs/rapport/rapport_technique.tex`, ce README | Rédigé avec les résultats ; captures MLOps à ajouter |
 
 ## Architecture
 
@@ -120,20 +123,38 @@ Le GPU gratuit de Kaggle suffit. Tout est dans `notebooks/kaggle_train.ipynb`.
      ```
 3. **Lancer le notebook** (GPU + Internet) : comparaison des trois modèles, évaluation du gagnant, heatmaps, export ONNX,
    puis `deepguard_outputs.zip`.
-4. **Récupérer les résultats** : dézippe à la racine du dépôt, puis
+4. **Récupérer les résultats** : dézippe `deepguard_outputs.zip` dans un dossier **séparé** (son `params.yaml` contient des
+   chemins Kaggle), copie dans le dépôt les dossiers `checkpoints/`, `data/processed/`, `models/`, `metrics/` et `reports/`,
+   mets dans `params.yaml` (section `train`) les hyperparamètres du modèle retenu (par exemple `model: vit`, `epochs: 3`,
+   `batch_size: 32`, `lr: 3e-5`), puis :
    ```bash
-   dvc commit -f && dvc push
+   dvc commit -f prepare train evaluate explain export   # enregistre ces sorties dans dvc.lock (pas « register » : voir 6)
+   dvc push                                              # envoie modèle et rapports sur DagsHub
    git add dvc.lock params.yaml metrics && git commit -m "feat: modèle entraîné" && git push
    docker-compose up --build        # l'API charge models/deepguard.onnx automatiquement
    ```
-5. **Versionner le jeu de données brut** (exigence du guide) : `dvc add data/raw && git add data/raw.dvc data/.gitignore`,
-   puis `dvc push`.
-6. **Model Registry** : avec un serveur MLflow (`docker-compose --profile mlops up -d`, puis
-   `export MLFLOW_TRACKING_URI=http://localhost:5000`) :
+5. **Versionner le jeu de données brut.** Le jeu complet (environ 4 Go) reste sur Kaggle ; on versionne le sous-ensemble de
+   28 000 images réellement utilisé (la graine est fixée : `prepare` retrouve exactement les mêmes listes).
+   Lance `notebooks/kaggle_export_subset.ipynb` sur Kaggle (sans GPU), télécharge `data_subset.zip`, dézippe-le dans `data/raw/`
+   (chemin attendu : `data/raw/real_vs_fake/real-vs-fake/train/...`), puis :
    ```bash
-   python -m src.models.register            # nouvelle version : alias staging (+ production si meilleure)
-   python scripts/pull_registry_model.py    # récupère la version « production » dans models/
+   dvc add data/raw && git add data/raw.dvc data/.gitignore
+   dvc push
    ```
+   `prepare` dépend désormais de `data/raw` : `dvc dag` montre `data/raw.dvc → prepare → train → …`.
+6. **Suivi MLflow et registre de modèles.** Les runs faits sur Kaggle sont dans `mlflow.db` (dossier `deepguard/` de l'Output
+   de la version, à placer dans `kaggle_mlflow/`). Depuis la racine du dépôt (PowerShell) :
+   ```powershell
+   mkdir mlflow-data
+   python scripts/mlflow_migrate.py --source sqlite:///kaggle_mlflow/mlflow.db --dest sqlite:///mlflow-data/mlflow.db
+   $env:MLFLOW_TRACKING_URI = "sqlite:///mlflow-data/mlflow.db"
+   python -m src.models.register            # nouvelle version : alias staging (+ production si meilleure)
+   dvc commit -f register                   # puis enregistre cette étape dans dvc.lock
+   mlflow ui --backend-store-uri sqlite:///mlflow-data/mlflow.db --port 5000     # http://localhost:5000
+   ```
+   Le même script envoie les runs sur DagsHub : `--dest https://dagshub.com/<utilisateur>/deepguard.mlflow`, avec les variables
+   `MLFLOW_TRACKING_USERNAME` et `MLFLOW_TRACKING_PASSWORD` (token). Pour récupérer plus tard la version « production » :
+   `python scripts/pull_registry_model.py`.
 7. **Galerie d'exemples** : `python scripts/export_samples.py` copie 4 images du jeu de test dans
    `frontend/public/samples/` (à committer, ce sont de petits fichiers).
 
@@ -157,13 +178,18 @@ Pour tester vite, dans `params.yaml` : `train_limit: 200`, `val_limit: 100`, `te
 
 ## Résultats
 
-À remplir après l'entraînement (sources : MLflow, `metrics/*.json`, `reports/`).
+Un seul entraînement par modèle (graine 42), sur 20 000 images d'entraînement, 4 000 de validation et 4 000 de test
+(sur 100 000 / 20 000 / 20 000 disponibles). Sources : `metrics/*.json`, MLflow, `reports/`. Détails et analyse : rapport.
 
 | Modèle | Accuracy (val) | F1 (val) | ROC-AUC (val) | Accuracy (test) | Généralisation (2e dataset) | Latence ONNX p50 | INT8 (taille, écart de proba) |
 |---|---|---|---|---|---|---|---|
-| Baseline CNN | | | | | | | |
-| EfficientNet-V2-S | | | | | | | |
-| ViT-B/16 | | | | | | | |
+| Baseline CNN | 0,840 | 0,842 | 0,919 | 0,836 | 0,539 | 14,5 ms | 0,40 Mo, 0,0002 (plus lent) |
+| EfficientNet-V2-S | 0,968 | 0,968 | 0,996 | 0,973 | 0,524 | 44,0 ms | 22,9 Mo, 0,0001 (plus lent) |
+| **ViT-B/16** | **0,998** | **0,998** | **1,000** | **0,996** | 0,529 | 203,9 ms | 86,9 Mo (au lieu de 343), 0,033, 26 % plus rapide |
+
+Le ViT commet 15 erreurs sur 4 000 images de test (EfficientNet : 108, baseline : 656). Sur le second jeu de données
+(photos réelles retouchées), les trois modèles ne font pas mieux que répondre toujours « réel » (53,0 %, AUC proche de 0,5) :
+ils détectent les visages générés par StyleGAN, pas les retouches ni les images d'autres générateurs.
 
 ## Tests, CI/CD et qualité
 
@@ -203,6 +229,8 @@ explosion de « FAKE » ou d'images sans visage).
 ## Limites et éthique
 
 - Entraîné sur des visages FFHQ (réels) et StyleGAN (générés) : les images de modèles de diffusion récents ne sont pas couvertes.
+- Entraînement sur 20 000 des 100 000 images disponibles, une seule exécution par modèle (pas de mesure de variabilité entre graines).
+- Aucune généralisation aux retouches ni aux images de modèles de diffusion (second jeu : 53 %, AUC 0,49) ; le modèle dépend du cadrage et du visage entier ; ses probabilités ne sont pas calibrées.
 - Une photo de webcam diffère des images d'entraînement (éclairage, compression, cadrage) : la précision réelle peut être inférieure.
 - Les cartes d'attention indiquent où le modèle a regardé, pas une preuve de falsification.
 - Un modèle peut se tromper : ne pas utiliser un verdict seul comme preuve.

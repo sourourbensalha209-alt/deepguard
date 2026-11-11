@@ -511,8 +511,10 @@ communique par des interfaces standard.
 
 \section{Versionnage des données et pipeline reproductible (DVC)}
 
-Le dépôt Git ne contient ni données ni poids : ils sont versionnés par DVC. Le jeu de données brut est suivi par
-\texttt{dvc add data/raw} (fichier \fichier{data/raw.dvc} commité) et les artefacts par le pipeline \fichier{dvc.yaml},
+Le dépôt Git ne contient ni données ni poids : ils sont versionnés par DVC. Le jeu complet (environ 4~Go) reste sur Kaggle ; on
+versionne le sous-ensemble de 28\,000 images réellement utilisé, par \texttt{dvc add data/raw} (fichier \fichier{data/raw.dvc}
+commité). La graine étant fixée, l'étape \texttt{prepare} retrouve exactement les mêmes listes. Cette étape dépend de
+\fichier{data/raw}, et les artefacts sont suivis par le pipeline \fichier{dvc.yaml},
 avec un stockage distant DagsHub déclaré dans \fichier{.dvc/config} (les identifiants restent en local, dans
 \fichier{.dvc/config.local}, exclu de Git).
 
@@ -522,7 +524,7 @@ avec un stockage distant DagsHub déclaré dans \fichier{.dvc/config} (les ident
 \toprule
 \textbf{Étape} & \textbf{Entrées principales} & \textbf{Sorties} \\
 \midrule
-\texttt{prepare} & \fichier{src/data/prepare.py}, paramètres \texttt{prepare} & listes \fichier{data/processed/*.csv} \\
+\texttt{prepare} & \fichier{data/raw}, \fichier{src/data/prepare.py}, paramètres \texttt{prepare} & listes \fichier{data/processed/*.csv} \\
 \texttt{train} & listes, \fichier{src/models/train.py}, paramètres \texttt{train} & \fichier{checkpoints/best.pt}, \fichier{metrics/train.json} \\
 \texttt{evaluate} & point de contrôle, listes & matrice de confusion, courbe ROC, \fichier{metrics/test.json} \\
 \texttt{explain} & point de contrôle & \fichier{reports/heatmaps.png} \\
@@ -536,7 +538,7 @@ avec un stockage distant DagsHub déclaré dans \fichier{.dvc/config} (les ident
 \figureou[0.9]{dvc-dag.png}{Graphe du pipeline (\texttt{dvc dag}).}{fig:dag}
 
 L'entraînement lourd s'exécute sur un GPU Kaggle (notebook \fichier{notebooks/kaggle_train.ipynb}) ; ses sorties
-sont ensuite enregistrées dans le pipeline par \texttt{dvc commit -f} puis poussées avec \texttt{dvc push}.
+sont ensuite enregistrées dans le pipeline par \texttt{dvc commit -f prepare train evaluate explain export} (l'étape \texttt{register} est enregistrée à part, après l'enregistrement du modèle dans MLflow), puis poussées avec \texttt{dvc push}.
 
 \section{Suivi d'expériences et registre de modèles (MLflow)}
 

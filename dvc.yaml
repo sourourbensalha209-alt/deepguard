@@ -2,6 +2,7 @@ stages:
   prepare:
     cmd: python -m src.data.prepare
     deps:
+      - data/raw                     # jeu de données brut (versionné par `dvc add data/raw`, voir data/raw.dvc)
       - src/data/prepare.py
       - src/data/dataset.py
       - src/utils/config.py
