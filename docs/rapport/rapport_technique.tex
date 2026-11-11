@@ -1,0 +1,713 @@
+% =====================================================================
+%  Rapport technique - Deep Learning Avance & MLOps - TEK-UP University
+%  Sujet : DeepGuard - Detection de visages generes par IA (Deepfake)
+%  Auteurs : Sourour Ben Salha & Ghaith Aouissaoui
+%  Compilation : pdflatex rapport_technique.tex (2 fois) -- ou Overleaf
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[french]{babel}
+\usepackage[a4paper,top=2.5cm,bottom=2.5cm,left=2.5cm,right=2.5cm,headheight=14pt]{geometry}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs,tabularx,multirow}
+\usepackage{caption}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,calc,babel}
+\usepackage[hidelinks]{hyperref}
+\usepackage{float}
+\usepackage{needspace}
+\usepackage{xstring}
+
+% ---------------- Couleurs (inspirees du logo TEK-UP) ----------------
+\definecolor{primaire}{HTML}{1E2A78}
+\definecolor{secondaire}{HTML}{2E6DB4}
+\definecolor{accent}{HTML}{C0392B}
+\definecolor{vert}{HTML}{1E8449}
+\definecolor{orange}{HTML}{D35400}
+\definecolor{violet}{HTML}{6C3483}
+\definecolor{grisclair}{HTML}{F4F6F8}
+\definecolor{grismoyen}{HTML}{BFC5CC}
+\definecolor{codebg}{HTML}{F7F7F9}
+
+% ---------------- Informations ----------------
+\newcommand{\nomprojet}{DeepGuard}
+\newcommand{\etudiantA}{Sourour \textsc{Ben Salha}}
+\newcommand{\etudiantB}{Ghaith \textsc{Aouissaoui}}
+\newcommand{\enseignant}{M. Haythem \textsc{Ghazouani}}
+
+% ---------------- Mise en forme ----------------
+\titleformat{\section}{\Large\sffamily\bfseries\color{primaire}}{\thesection}{0.8em}{}[{\color{primaire}\titlerule[0.6pt]}]
+\titleformat{\subsection}{\large\sffamily\bfseries\color{secondaire}}{\thesubsection}{0.8em}{}
+\titlespacing*{\section}{0pt}{18pt}{10pt}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\sffamily\color{primaire}\textbf{Deep Learning Avancé \& MLOps} | \nomprojet}
+\fancyhead[R]{\small\sffamily\color{gray}TEK-UP University}
+\fancyfoot[L]{\small\sffamily\color{gray}\etudiantA{} \& \etudiantB}
+\fancyfoot[R]{\small\sffamily\color{primaire}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\captionsetup{font=small,labelfont={bf,color=primaire}}
+\setlength{\parskip}{5pt}
+\setlength{\parindent}{0pt}
+
+\lstset{backgroundcolor=\color{codebg},basicstyle=\ttfamily\footnotesize,
+  frame=single,rulecolor=\color{grismoyen},breaklines=true,columns=fullflexible,
+  keepspaces=true,showstringspaces=false}
+
+\newtcolorbox{encadre}[2][]{enhanced,colback=grisclair,colframe=#2,
+  fonttitle=\sffamily\bfseries,coltitle=white,arc=2mm,boxrule=0.8pt,#1}
+
+\tikzset{
+  bloc/.style={draw=#1,fill=#1!10,rounded corners=3pt,thick,align=center,
+               font=\small\sffamily,minimum height=1cm,text width=2.6cm},
+  bloc/.default=secondaire,
+  fleche/.style={-{Stealth[length=2.5mm]},thick,color=#1},
+  fleche/.default=primaire,
+  etiquette/.style={font=\scriptsize\sffamily,color=#1,fill=white,inner sep=1pt},
+  etiquette/.default=gray,
+}
+
+
+% ---------------- Elements a completer (rouge) + figures automatiques ----------------
+\newcommand{\aremplir}[1]{\textcolor{accent}{\textbf{[à compléter : #1]}}}
+\newcommand{\figureou}[4][0.8]{%
+  \IfFileExists{figures/#2}{\begin{figure}[H]\centering\includegraphics[width=#1\linewidth]{figures/#2}\caption{#3}\label{#4}\end{figure}}%
+  {\begin{encadre}[title=Figure à insérer]{accent}\aremplir{déposer \texttt{\detokenize{#2}} dans \texttt{figures/} : #3}\end{encadre}}}
+\newcommand{\ar}{\textcolor{accent}{\textbf{?}}}
+\DeclareRobustCommand{\fichier}[1]{\texttt{\StrSubstitute{\detokenize{#1}}{/}{/\allowbreak}}}
+
+\begin{document}
+
+% =====================================================================
+%  PAGE DE GARDE
+% =====================================================================
+\begin{titlepage}
+\thispagestyle{empty}
+\begin{tikzpicture}[remember picture,overlay]
+  \fill[primaire] (current page.north west) rectangle ([yshift=-0.6cm]current page.north east);
+  \fill[secondaire] ([yshift=-0.6cm]current page.north west) rectangle ([yshift=-0.75cm]current page.north east);
+  \fill[primaire] (current page.south west) rectangle ([yshift=0.6cm]current page.south east);
+\end{tikzpicture}
+\centering
+\vspace*{0.3cm}
+
+\includegraphics[width=7cm]{logo.png}
+
+\vspace{0.8cm}
+{\normalsize\sffamily Cycle Ingénieur en Intelligence Artificielle \& Data Science --- 3\textsuperscript{ème} année}
+
+\vspace{1.8cm}
+{\large\sffamily\color{secondaire} RAPPORT TECHNIQUE DE PROJET}\\[0.2cm]
+{\Large\sffamily\bfseries Deep Learning Avancé \& MLOps}
+
+\vspace{1.4cm}
+% ---------------- Sujet entre deux barres ----------------
+{\color{primaire}\rule{\linewidth}{1.6pt}}\\[0.5cm]
+{\huge\sffamily\bfseries\color{primaire} \nomprojet}\\[0.35cm]
+{\LARGE\sffamily\bfseries Détection de Visages Générés par IA\\[0.15cm] (Deepfake : Real vs Fake Faces)}\\[0.4cm]
+{\color{primaire}\rule{\linewidth}{1.6pt}}
+
+\vfill
+
+\begin{minipage}[t]{0.48\textwidth}
+  \raggedright
+  {\sffamily\bfseries\color{primaire} Réalisé par :}\\[0.2cm]
+  {\sffamily\large \etudiantA}\\[0.1cm]
+  {\sffamily\large \etudiantB}
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.48\textwidth}
+  \raggedleft
+  {\sffamily\bfseries\color{primaire} Encadré par :}\\[0.2cm]
+  {\sffamily\large \enseignant}
+\end{minipage}
+
+\vspace{1.6cm}
+{\sffamily\large Année universitaire 2026 -- 2027}
+\vspace{0.8cm}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{Introduction et contexte}
+% =====================================================================
+
+Les réseaux antagonistes génératifs (GAN) comme StyleGAN produisent des visages photoréalistes de personnes qui
+n'existent pas. Ces images (deepfakes) servent à la fraude à l'identité, aux faux profils et à la désinformation, et
+l'œil humain ne les distingue plus des vraies photographies.
+
+\nomprojet{} est une application web qui détecte si un visage est réel ou généré par IA, explique visuellement sa
+décision et suit un cycle de vie MLOps complet, des données au déploiement conteneurisé. Un seul projet répond à deux
+modules : \textbf{Deep Learning Avancé} (axe 4 : Vision Transformers) et \textbf{MLOps}. Chaque module évalue sa
+partie du même dépôt Git :
+\url{https://github.com/sourourbensalha209-alt/deepguard}.
+
+\begin{encadre}[title=Comment lire ce rapport]{primaire}
+\begin{itemize}
+  \item \textbf{Partie A (sections 4 à 8)} : modélisation Deep Learning, évaluée par le module Deep Learning Avancé.
+  \item \textbf{Partie B (sections 9 à 15)} : cycle de vie MLOps et solution logicielle, évaluée par le module MLOps. Les sections 16 et 17 sont communes.
+  \item Les éléments \aremplir{en rouge} dépendent des résultats d'entraînement et sont à compléter avant l'envoi.
+\end{itemize}
+\end{encadre}
+
+% =====================================================================
+\section{Problématique et objectifs}
+% =====================================================================
+
+\begin{encadre}[title=Problématique]{accent}
+Comment concevoir un système de Deep Learning qui distingue de façon fiable un visage réel d'un visage généré par IA,
+explique visuellement sa décision et soit mis à disposition via une application web rapide, reproductible et testée~?
+\end{encadre}
+
+\begin{enumerate}
+  \item Comparer trois architectures : une baseline CNN, EfficientNet-V2-S (transfer learning) et ViT-B/16.
+  \item Expliquer chaque prédiction par une carte de chaleur (CAM pour les CNN, Attention Rollout pour le ViT).
+  \item Optimiser l'inférence (export ONNX, quantification INT8) et mesurer le gain de latence.
+  \item Servir le modèle par une API REST FastAPI et une interface React (dépôt d'image, webcam, exemples).
+  \item Industrialiser : DVC, MLflow (suivi et registre), Docker multi-stage, GitHub Actions, tests, monitoring.
+\end{enumerate}
+
+% =====================================================================
+\Needspace{8\baselineskip}
+\section{Répartition du travail}
+% =====================================================================
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Membre} & \textbf{Responsabilités principales} & \textbf{Module concerné} \\
+\midrule
+Sourour \textsc{Ben Salha} & Données, entraînement et comparaison des modèles, explicabilité, DVC, MLflow, export ONNX & Deep Learning Avancé, MLOps \\
+Ghaith \textsc{Aouissaoui} & API FastAPI, interface React, Docker, CI/CD GitHub Actions, tests & Deep Learning Avancé (solution full-stack), MLOps \\
+\bottomrule
+\end{tabularx}
+\caption{Répartition des responsabilités. Les deux membres sont solidaires de l'ensemble des livrables ; l'historique Git (commits et Pull Requests) détaille la contribution de chacun.}
+\end{table}
+\aremplir{ajuster ce tableau à la répartition réelle des tâches}
+
+\newpage
+% =====================================================================
+\section*{\Huge\color{primaire}Partie A --- Deep Learning Avancé}
+\addcontentsline{toc}{section}{\textbf{Partie A --- Deep Learning Avancé}}
+% =====================================================================
+
+\section{Données et prétraitement}
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+ & \textbf{140k Real and Fake Faces} & \textbf{Real and Fake Face Detection} \\
+\midrule
+Source & Kaggle (xhlulu) & Kaggle (Yonsei University) \\
+Contenu & 70\,000 visages réels (FFHQ) et 70\,000 visages générés (StyleGAN) & 1\,081 visages réels et 960 visages retouchés \\
+Résolution & $256\times256$ & $600\times600$ \\
+Découpage & train 100\,000 / validation 20\,000 / test 20\,000 & aucun : test de généralisation uniquement \\
+\bottomrule
+\end{tabularx}
+\caption{Jeux de données. Le second contient des visages retouchés et non générés par GAN : une baisse de performance est attendue.}
+\end{table}
+
+\textbf{Absence de fuite de données.} Le découpage train / validation / test est fourni par le jeu de données et n'est
+jamais modifié. La normalisation utilise les statistiques fixes d'ImageNet (aucun paramètre appris sur le test).
+L'augmentation (retournement horizontal, \texttt{ColorJitter}) n'est appliquée qu'à l'entraînement. Les listes de
+fichiers sont construites par \fichier{src/data/prepare.py} avec une graine fixe (\texttt{seed: 42}), de façon
+équilibrée entre les classes, ce qui rend les sous-ensembles reproductibles.
+
+\textbf{Prétraitement.} Redimensionnement en $224\times224$, conversion en tenseur, normalisation. Les mêmes opérations
+sont reproduites à l'identique dans l'API (\fichier{backend/app/inference.py}), après recadrage du visage par un
+détecteur OpenCV.
+
+\section{Modèles comparés}
+
+\subsection{Baseline CNN}
+Réseau de 4 blocs (convolution $3\times3$, \emph{BatchNorm}, ReLU, \emph{MaxPool}) suivis d'un pooling global et d'une
+couche linéaire, entraîné \emph{from scratch}. Il sert de référence.
+
+\subsection{EfficientNet-V2-S (transfer learning)}
+Réseau convolutif pré-entraîné sur ImageNet (implémentation \texttt{efficientnetv2\_rw\_s} de la bibliothèque timm,
+variante d'EfficientNet-V2-S), dont la tête est remplacée par une couche à 2 classes et dont tous les poids sont affinés.
+
+\subsection{Vision Transformer ViT-B/16}
+\textbf{Patchification.} L'image $224\times224$ est découpée en patchs de $16\times16$ pixels, soit une grille de
+$14\times14=196$ patchs. Chaque patch est projeté linéairement dans un espace de dimension 768.
+
+\textbf{Embeddings de position.} Un token de classification \texttt{[CLS]} est ajouté, donnant 197 tokens. Des
+embeddings de position \emph{appris}, de forme $(1,197,768)$, sont ajoutés aux tokens : sans eux, l'auto-attention
+ignorerait l'ordre spatial des patchs.
+
+\textbf{Auto-attention.} Dans chacune des 12 couches (12 têtes), chaque token calcule
+\[
+  \mathrm{Attention}(Q,K,V)=\mathrm{softmax}\!\left(\frac{QK^{\top}}{\sqrt{d_k}}\right)V ,
+\]
+ce qui permet de relier des zones éloignées du visage (contour des cheveux, yeux, arrière-plan), là où un noyau
+convolutif ne voit que son voisinage. La décision est lue sur le token \texttt{[CLS]}. La grille, le nombre de patchs
+et la forme des embeddings sont journalisés dans MLflow par la fonction \texttt{describe\_vit}.
+
+\subsection{Protocole d'entraînement}
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+ & \textbf{Baseline CNN} & \textbf{EfficientNet-V2-S} & \textbf{ViT-B/16} \\
+\midrule
+Taux d'apprentissage & $10^{-3}$ & $10^{-4}$ & $3\cdot10^{-5}$ \\
+Époques & 10 & 3 & 3 \\
+Taille de lot & 128 & 64 & 32 \\
+\bottomrule
+\end{tabular}
+\caption{Hyperparamètres utilisés (fichier \fichier{params.yaml}).}
+\end{table}
+Optimiseur AdamW (décroissance de poids $0{,}01$), planificateur cosinus, précision mixte (AMP) sur GPU, perte
+d'entropie croisée. Le meilleur point de contrôle est retenu sur le \textbf{F1 de validation}, avec la classe « fake »
+comme classe positive. Graine fixée (42). Chaque modèle est entraîné une seule fois, sur GPU Kaggle (T4~$\times$2), sur 20\,000 images d'entraînement (sur 100\,000 disponibles), avec 4\,000 images de validation et 4\,000 images de test (sur 20\,000 disponibles pour chacun).
+
+\section{Explicabilité}
+
+\textbf{CNN : CAM.} Pour une tête « pooling global + couche linéaire », Grad-CAM est équivalent à CAM : la carte de la
+classe $c$ est $\sum_k w_{c,k}\,F_k$, où $F_k$ sont les cartes de caractéristiques de la dernière couche et $w_{c,k}$ les
+poids du classifieur. Aucun gradient n'est nécessaire, ce qui permet d'inclure le calcul dans le graphe ONNX.
+
+\textbf{ViT : Attention Rollout.} Pour chaque couche $\ell$, on moyenne l'attention sur les têtes, on ajoute la
+connexion résiduelle et on normalise : $\hat A_\ell=\mathrm{norm}(\bar A_\ell+I)$. Le produit
+$R=\hat A_L\cdots\hat A_1$ donne, sur la ligne du token \texttt{[CLS]}, l'influence de chaque patch sur la décision.
+La carte $14\times14$ est étirée sur la photo. Elle est calculée \emph{dans} le graphe ONNX
+(\texttt{ViTWithRollout}) : l'API n'a besoin que d'ONNX Runtime pour prédire et expliquer.
+
+Les cartes indiquent où le modèle a regardé ; elles ne constituent pas une preuve de falsification.
+
+\section{Optimisation de l'inférence}
+
+\textbf{Export ONNX.} Le modèle exporté a une entrée \texttt{image} et deux sorties : \texttt{logits} (classe 0 =
+fake) et \texttt{cam} (carte d'explication). Le script vérifie la \textbf{parité} avec PyTorch (écart $<10^{-3}$) et
+mesure la latence médiane (p50) et p95 sur CPU, PyTorch contre ONNX Runtime.
+
+\textbf{Quantification INT8.} Une version à poids quantifiés dynamiquement est produite
+(\fichier{src/utils/quantize.py}) avec sa taille, sa latence et l'écart maximal de probabilité par rapport au modèle
+FP32. Cet écart est mesuré sur des entrées aléatoires : la version INT8 ne doit être déployée qu'après validation sur
+le jeu de test.
+
+\section{Résultats et analyse}
+
+Tous les chiffres proviennent d'une exécution unique de chaque modèle (graine 42), sur les sous-ensembles décrits
+en section~5.4. Les latences sont mesurées sur CPU, sur la machine du notebook Kaggle, avec une image à la fois.
+
+\subsection{Comparaison des trois modèles}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Modèle} & \textbf{Params (M)} & \textbf{Durée (s)} & \textbf{Acc. val} & \textbf{F1 val} & \textbf{AUC val} \\
+\midrule
+Baseline CNN & 0,39 & 927 & 0,840 & 0,842 & 0,919 \\
+EfficientNet-V2-S & 22,15 & 409 & 0,968 & 0,968 & 0,996 \\
+ViT-B/16 & 85,80 & 594 & \textbf{0,998} & \textbf{0,998} & \textbf{1,000} \\
+\bottomrule
+\end{tabular}
+\caption{Entraînement et validation (4\,000 images). Durée : temps d'entraînement complet (10 époques pour la baseline, 3 pour les deux autres).}
+\end{table}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Modèle} & \textbf{Acc. test} & \textbf{F1 test} & \textbf{AUC test} & \textbf{Erreurs / 4\,000} \\
+\midrule
+Baseline CNN & 0,836 & 0,837 & 0,921 & 656 \\
+EfficientNet-V2-S & 0,973 & 0,973 & 0,996 & 108 \\
+ViT-B/16 & \textbf{0,996} & \textbf{0,996} & \textbf{1,000} & \textbf{15} \\
+\bottomrule
+\end{tabular}
+\caption{Évaluation sur le jeu de test (4\,000 images, classe positive : « fake »). Le ViT commet environ 7 fois moins d'erreurs qu'EfficientNet et 44 fois moins que la baseline.}
+\end{table}
+
+À titre indicatif (approximation binomiale à 95\,\%), l'incertitude sur l'exactitude est d'environ $\pm0{,}2$ point pour le
+ViT et $\pm0{,}5$ point pour EfficientNet : l'écart entre les deux modèles (2,3 points) dépasse largement ces marges. Les
+chiffres reposent toutefois sur un seul entraînement par modèle : la variabilité entre graines n'a pas été mesurée.
+
+\figureou[0.5]{confusion_matrix.png}{Matrice de confusion du ViT-B/16 sur le jeu de test : 7 vrais visages classés « fake » et 8 faux classés « real ».}{fig:cm}
+\figureou[0.5]{roc_curve.png}{Courbe ROC du ViT-B/16 sur le jeu de test (AUC $=1{,}000$ à l'arrondi).}{fig:roc}
+
+\subsection{Généralisation au second jeu de données}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Modèle} & \textbf{Exactitude} & \textbf{F1 (classe fake)} & \textbf{AUC} \\
+\midrule
+Baseline CNN & 0,539 & 0,131 & 0,542 \\
+EfficientNet-V2-S & 0,524 & 0,040 & 0,479 \\
+ViT-B/16 & 0,529 & 0,006 & 0,487 \\
+\midrule
+Répondre toujours « réel » & 0,530 & 0 & 0,500 \\
+\bottomrule
+\end{tabular}
+\caption{Test de généralisation sur \emph{Real and Fake Face Detection} (1\,081 visages réels, 960 visages retouchés).}
+\end{table}
+
+Sur ce jeu, les trois modèles ne font pas mieux qu'un classifieur qui répondrait toujours « réel » (53,0\,\% de visages
+réels) : leur AUC est proche de $0{,}5$ et le F1 du ViT sur la classe « fake » est de 0,006, il ne prédit presque jamais
+« fake ». La chute est donc complète, et non une simple baisse de performance.
+
+\subsection{Explicabilité}
+
+\figureou[0.98]{heatmaps.png}{Attention Rollout du ViT-B/16 : 4 visages générés (colonnes de gauche) et 4 réels (colonnes de droite), probabilité « fake » en titre.}{fig:heat}
+\figureou[0.98]{heatmaps_efficientnet.png}{CAM d'EfficientNet-V2-S sur les mêmes images.}{fig:heat2}
+
+Sur ces 8 images, l'attention maximale du ViT se concentre souvent sur le haut du front et la racine des cheveux, sur le
+bord inférieur de l'image (cou, épaules, vêtements) et sur les coins de l'arrière-plan, rarement sur les yeux ou la
+bouche. La CAM d'EfficientNet couvre davantage les régions du visage (joues, front, bouche) pour les visages générés,
+et les bords ou l'arrière-plan pour les vrais visages. Les cartes sont grossières : $14\times14$ pour le ViT, $7\times7$
+pour EfficientNet. Huit exemples ne permettent aucune conclusion générale, et ces cartes indiquent où le modèle a
+regardé, pas pourquoi il décide.
+
+\subsection{Optimisation de l'inférence}
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+\textbf{Modèle} & \textbf{PyTorch} & \textbf{ONNX} & \textbf{INT8} & \textbf{Taille (Mo)} & \textbf{Écart} \\
+\midrule
+Baseline CNN & 20,3 & 14,5 & 61,1 & 1,56 / 0,40 & 0,0002 \\
+EfficientNet-V2-S & 99,9 & 44,0 & 369,5 & 88,4 / 22,9 & 0,0001 \\
+ViT-B/16 & 235,9 & 203,9 & \textbf{151,4} & 343,3 / \textbf{86,9} & 0,0329 \\
+\bottomrule
+\end{tabular}
+\caption{Latences médianes p50 en ms (CPU, une image) pour PyTorch, ONNX Runtime (FP32) et INT8 ; taille ONNX FP32 / INT8 ; écart maximal de probabilité entre INT8 et FP32 sur des entrées aléatoires (source : \fichier{metrics/export.json}). L'écart entre PyTorch et ONNX Runtime est inférieur à $2\cdot10^{-5}$ pour les trois modèles.}
+\end{table}
+
+L'export ONNX réduit la latence de 1,4 fois (baseline), 2,3 fois (EfficientNet) et 1,16 fois (ViT). La quantification INT8
+dynamique n'est utile que pour le ViT : le modèle est 4 fois plus petit (343 $\to$ 87~Mo) et 26\,\% plus rapide que le
+FP32 ; pour les deux CNN, elle est \emph{plus lente} (4 fois pour la baseline, 8 fois pour EfficientNet), car la
+quantification dynamique cible surtout les produits matriciels. La version INT8 du ViT n'a pas été évaluée sur le jeu de
+test : le modèle déployé est le FP32. Dans l'application (Docker sur un ordinateur portable, CPU), le calcul serveur
+mesuré va de 0,2 à 2,3~s selon l'image et la charge de la machine, et il atteint 7,6~s au premier appel (démarrage à
+froid) ; il inclut la détection du visage et le calcul de la carte d'attention.
+
+\subsection{Robustesse sur une image générée}
+
+Le ViT déployé a été testé sur une seule image générée par StyleGAN, dégradée de plusieurs façons par le script de
+robustesse du dépôt (\fichier{scripts/robustness_test.py}). Ce test est qualitatif : une seule image ne permet pas de
+conclure.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Dégradation} & \textbf{Verdict} & \textbf{P(généré)} \\
+\midrule
+Aucune & FAKE & 99,9\,\% \\
+JPEG, qualité 75 / 50 / 25 / 10 & FAKE & 99,6 / 99,9 / 99,9 / 99,5\,\% \\
+Flou gaussien, rayon 1 / 2 / 4 & FAKE & 99,9 / 99,8 / 99,7\,\% \\
+Bruit, $\sigma=5$ / 15 / 30 & FAKE & 99,7 / 99,7 / 99,8\,\% \\
+Réduction à 128 / 64 / 32 px & FAKE / FAKE / \textbf{REAL} & 99,9 / 97,6 / 12,1\,\% \\
+Recadrage central 80 / 60\,\% & \textbf{REAL} / \textbf{REAL} & 0,2 / 0,0\,\% \\
+\bottomrule
+\end{tabular}
+\caption{Réponse du ViT à des dégradations d'une image StyleGAN.}
+\end{table}
+
+Le modèle résiste à la compression, au flou et au bruit, mais bascule sur « réel » à 32 pixels et après un simple
+recadrage central, alors que le visage reste détecté : il dépend du cadrage et de l'échelle du visage, qui sont fixes
+dans les données d'entraînement. Ces sorties sont presque toujours proches de 0 ou de 100\,\% : les probabilités ne sont
+pas calibrées.
+
+\subsection{Tests qualitatifs sur des images réelles}
+
+Trois essais ont été faits dans l'application, à titre d'illustration. Un vrai visage de face est jugé « réel » à
+100\,\% et un visage StyleGAN « généré » à 99\,\%. Une vraie photo retouchée avec un modèle de génération d'images
+(ChatGPT) est jugée « réelle » à 100\,\%, le visage étant pourtant détecté. Un gros plan sans visage entier (œil, nez) est
+également jugé « réel » à 100\,\%, mais aucun visage n'est détecté et l'image est déformée : l'interface affiche
+désormais « Résultat non fiable » dans ce cas.
+
+\subsection{Analyse critique}
+
+\begin{enumerate}
+  \item \textbf{Quel modèle gagne ?} Le ViT-B/16 : 99,62\,\% d'exactitude sur le test (15 erreurs sur 4\,000), contre 97,3\,\%
+        pour EfficientNet (108 erreurs) et 83,6\,\% pour la baseline (656 erreurs).
+  \item \textbf{Son coût est-il justifié ?} Il a 4 fois plus de paramètres qu'EfficientNet (85,8~M contre 22,2~M) et une
+        latence ONNX 4,6 fois plus élevée (204~ms contre 44~ms), pour environ 7 fois moins d'erreurs. Son temps
+        d'entraînement est comparable (594~s contre 409~s). Pour un usage où 0,2 à 2~s par image sont acceptables, le gain
+        justifie le coût ; pour un usage en temps réel, EfficientNet est un compromis plus économique.
+  \item \textbf{Que montrent les cartes ?} Voir la section « Explicabilité » : le ViT regarde surtout le haut du front, les
+        bords et l'arrière-plan, plus que les yeux et la bouche. Sur 8 images, cela reste une observation, pas une preuve.
+  \item \textbf{Pourquoi la performance s'effondre-t-elle sur le second jeu ?} Les « faux » de ce jeu sont des photos
+        réelles retouchées, alors que les modèles ont appris sur des visages entièrement générés par StyleGAN. Notre
+        hypothèse, non testée, est qu'ils ont appris les traces propres à StyleGAN (et non une notion générale de
+        falsification), et que la résolution ($600\times600$ contre $256\times256$) et la chaîne de compression
+        différentes de ce jeu déplacent aussi la distribution des images.
+  \item \textbf{Quels cas d'erreur ?} Sur le test, 7 vrais visages sont classés « fake » et 8 faux sont classés « real ».
+        Ces 15 images n'ont pas été examinées une à une, ce qui est une piste d'analyse.
+\end{enumerate}
+
+\begin{encadre}[title=Relecture à faire]{orange}
+\aremplir{relire cette analyse avec tes propres observations ; mettre à jour les chiffres si tu relances un entraînement}
+\end{encadre}
+
+\newpage
+% =====================================================================
+\section*{\Huge\color{primaire}Partie B --- MLOps et solution logicielle}
+\addcontentsline{toc}{section}{\textbf{Partie B --- MLOps et solution logicielle}}
+% =====================================================================
+
+\section{Architecture globale}
+
+L'application est un système découplé, orchestré par Docker Compose : chaque composant a un rôle unique et
+communique par des interfaces standard.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=8mm and 9mm]
+  \node[bloc=secondaire] (d) {Données\\Kaggle (DVC)};
+  \node[bloc=secondaire,right=of d] (p) {\texttt{prepare}};
+  \node[bloc=secondaire,right=of p] (t) {\texttt{train}\\(MLflow)};
+  \node[bloc=secondaire,right=of t] (e) {\texttt{evaluate}\\\texttt{explain}};
+  \node[bloc=vert,below=of e] (x) {Export ONNX\\+ INT8};
+  \node[bloc=vert,left=of x] (r) {Registre MLflow\\\texttt{staging} / \texttt{production}};
+  \node[bloc=orange,left=of r] (a) {API FastAPI\\ONNX Runtime};
+  \node[bloc=violet,left=of a] (f) {Interface\\React};
+  \draw[fleche] (d) -- (p); \draw[fleche] (p) -- (t); \draw[fleche] (t) -- (e);
+  \draw[fleche] (e) -- (x); \draw[fleche] (x) -- (r); \draw[fleche] (r) -- (a); \draw[fleche] (a) -- (f);
+\end{tikzpicture}
+\caption{Du jeu de données à l'interface : pipeline reproductible (DVC), suivi (MLflow) et service (FastAPI, React).}
+\end{figure}
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Composant} & \textbf{Rôle} \\
+\midrule
+\fichier{frontend/} & Interface React, Vite, Tailwind (port 3000) \\
+\fichier{backend/} & API FastAPI, validation Pydantic, ONNX Runtime (port 8000) \\
+\fichier{src/} & Code Deep Learning : \texttt{data/}, \texttt{models/}, \texttt{utils/} \\
+\fichier{dvc.yaml} & Pipeline reproductible \texttt{prepare}, \texttt{train}, \texttt{evaluate}, \texttt{explain}, \texttt{export}, \texttt{register} \\
+\fichier{docker-compose.yml} & Lancement complet ; profils \texttt{mlops} (MLflow) et \texttt{monitoring} (Prometheus, Grafana) \\
+\fichier{.github/workflows/} & Intégration continue et build des images \\
+\bottomrule
+\end{tabularx}
+\caption{Composants du dépôt.}
+\end{table}
+
+\section{Versionnage des données et pipeline reproductible (DVC)}
+
+Le dépôt Git ne contient ni données ni poids : ils sont versionnés par DVC. Le jeu de données brut est suivi par
+\texttt{dvc add data/raw} (fichier \fichier{data/raw.dvc} commité) et les artefacts par le pipeline \fichier{dvc.yaml},
+avec un stockage distant DagsHub déclaré dans \fichier{.dvc/config} (les identifiants restent en local, dans
+\fichier{.dvc/config.local}, exclu de Git).
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Étape} & \textbf{Entrées principales} & \textbf{Sorties} \\
+\midrule
+\texttt{prepare} & \fichier{src/data/prepare.py}, paramètres \texttt{prepare} & listes \fichier{data/processed/*.csv} \\
+\texttt{train} & listes, \fichier{src/models/train.py}, paramètres \texttt{train} & \fichier{checkpoints/best.pt}, \fichier{metrics/train.json} \\
+\texttt{evaluate} & point de contrôle, listes & matrice de confusion, courbe ROC, \fichier{metrics/test.json} \\
+\texttt{explain} & point de contrôle & \fichier{reports/heatmaps.png} \\
+\texttt{export} & point de contrôle & \fichier{models/deepguard.onnx} (+ INT8), \fichier{metrics/export.json} \\
+\texttt{register} & modèle ONNX, métriques & version du registre MLflow, \fichier{metrics/registry.json} \\
+\bottomrule
+\end{tabularx}
+\caption{Étapes du pipeline DVC. Les hyperparamètres sont dans \fichier{params.yaml} : DVC ne relance que les étapes dont les entrées ont changé.}
+\end{table}
+
+\figureou[0.9]{dvc-dag.png}{Graphe du pipeline (\texttt{dvc dag}).}{fig:dag}
+
+L'entraînement lourd s'exécute sur un GPU Kaggle (notebook \fichier{notebooks/kaggle_train.ipynb}) ; ses sorties
+sont ensuite enregistrées dans le pipeline par \texttt{dvc commit -f} puis poussées avec \texttt{dvc push}.
+
+\section{Suivi d'expériences et registre de modèles (MLflow)}
+
+Chaque entraînement est un \emph{run} de l'expérience \texttt{deepguard} : paramètres (modèle, hyperparamètres, tailles
+d'échantillon, caractéristiques du ViT), métriques par époque (perte, accuracy, F1, ROC-AUC de validation), durée,
+\emph{tag} \texttt{git\_sha} du commit. L'évaluation sur le test et le test de généralisation sont journalisés dans
+des runs séparés avec leurs figures.
+
+\textbf{Registre.} \texttt{python -m src.models.register} enregistre le modèle ONNX comme nouvelle version de
+\texttt{deepguard}. Elle reçoit toujours l'alias \texttt{staging}, et l'alias \texttt{production} si son F1 de
+validation est au moins égal à celui de la version actuellement en production (ou sur demande, avec
+\texttt{--promote}). MLflow ayant déprécié les « stages » au profit des alias, \texttt{staging} et \texttt{production}
+jouent le rôle des statuts Staging et Production. Le script \fichier{scripts/pull_registry_model.py} récupère la
+version \texttt{production} dans \fichier{models/}.
+
+\figureou[0.95]{mlflow-runs.png}{Comparaison des trois runs d'entraînement dans MLflow.}{fig:mlflow}
+\figureou[0.95]{mlflow-registry.png}{Registre MLflow : versions du modèle et alias \texttt{staging} / \texttt{production}.}{fig:registry}
+
+\section{Backend : API FastAPI}
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}ll>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Méthode} & \textbf{Route} & \textbf{Description} \\
+\midrule
+GET & \texttt{/health} & État du serveur, GPU disponible, fournisseurs ONNX Runtime, version du modèle, modèle de démonstration ou non \\
+GET & \texttt{/model/metadata} & Nom, architecture, classes, métriques de validation et de test, version Git \\
+POST & \texttt{/predict} & Image $\rightarrow$ verdict (\texttt{REAL}/\texttt{FAKE}), probabilités, latence serveur \\
+POST & \texttt{/predict/visualize} & Idem + calque de chaleur PNG et région analysée (\texttt{face\_box}) \\
+GET & \texttt{/metrics} & Métriques Prometheus \\
+\bottomrule
+\end{tabularx}
+\caption{Routes de l'API (documentation Swagger sur \texttt{/docs}).}
+\end{table}
+
+\textbf{Robustesse.} Tous les payloads sont validés par des schémas Pydantic. Les erreurs sont sémantiques :
+400 si le fichier n'est pas une image valide (format ou contenu), 413 si l'image dépasse 5~Mo ou une taille en pixels
+raisonnable, 503 si aucun modèle n'est chargé. L'orientation EXIF des photos de téléphone est corrigée. L'inférence
+s'exécute dans un pool de threads pour ne pas bloquer la boucle asynchrone.
+
+\textbf{Modèle de démonstration.} Tant qu'aucun modèle entraîné n'existe, l'API charge un petit modèle ONNX à poids
+aléatoires intégré à l'image, afin que toute la chaîne fonctionne ; \texttt{/health} et l'interface le signalent
+explicitement, car ses prédictions n'ont aucune valeur.
+
+\textbf{Prétraitement côté serveur.} Un détecteur de visages OpenCV recadre la photo avant l'inférence ; si aucun
+visage n'est détecté, l'image entière est analysée et la réponse l'indique (\texttt{face\_detected = false}).
+
+\section{Frontend : interface React}
+
+L'interface (React, Vite, Tailwind) propose trois modes d'ingestion : glisser-déposer, galerie d'exemples en un clic et
+webcam. Le résultat affiche le verdict, deux barres de probabilité animées (réel et généré), la latence côté serveur et
+côté client, ainsi qu'un curseur de comparaison entre la photo et la carte d'explication superposée à la région
+analysée. Un résultat peu sûr (confiance inférieure à 65\,\%) est signalé comme tel plutôt que présenté comme un verdict.
+Les composants suivent l'arborescence demandée : \texttt{Dropzone}, \texttt{Webcam}, \texttt{HeatmapCanvas},
+\texttt{ProbabilityChart}, \texttt{Samples}, et le client \fichier{services/api.js}.
+
+\figureou[0.95]{ui-accueil.png}{Interface DeepGuard (état initial, modèle de démonstration).}{fig:ui}
+\figureou[0.95]{ui-resultat.png}{Interface après analyse d'une image avec le modèle entraîné (verdict, barres, carte d'explication).}{fig:uires}
+
+\Needspace{8\baselineskip}
+\section{Conteneurisation et CI/CD}
+
+\textbf{Docker.} Les deux images utilisent des \emph{builds} multi-étapes : l'API construit son environnement Python dans
+une première étape puis ne recopie que l'environnement dans une image minimale exécutée par un utilisateur non
+privilégié, avec \texttt{HEALTHCHECK} ; le frontend est compilé par Node puis servi par nginx. Le modèle entraîné
+n'est pas copié dans l'image : il est monté depuis \fichier{models/} (versionné par DVC). L'application complète se
+lance par \texttt{docker-compose up --build}.
+
+\textbf{GitHub Actions.} Deux workflows s'exécutent à chaque push et Pull Request :
+\begin{itemize}
+  \item \fichier{ci-tests.yml} : lint Python avec \texttt{ruff} (qui remplace \texttt{flake8} et \texttt{black}) et lint du
+        frontend avec \texttt{oxlint} (règles React) ; tests de l'API ; build du frontend ; pipeline ML complet sur des
+        images synthétiques (CPU).
+  \item \fichier{docker-build.yml} : démarrage de toute la stack avec \texttt{docker compose up --wait}, test de fumée
+        sur l'API et l'interface, puis construction des images et publication sur GHCR depuis la branche principale.
+\end{itemize}
+
+\figureou[0.95]{github-actions.png}{Exécutions des workflows GitHub Actions (tests et build Docker au vert).}{fig:gha}
+
+\Needspace{8\baselineskip}
+\section{Tests et monitoring}
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Niveau} & \textbf{Ce qui est vérifié} \\
+\midrule
+API (\fichier{backend/tests/}) & 12 tests Pytest : endpoints, formats refusés, fichier corrompu, taille maximale, calque de chaleur, métriques ; modèle ONNX de démonstration réellement chargé \\
+Pipeline ML (\fichier{tests/}) & \texttt{prepare} $\rightarrow$ \texttt{train} $\rightarrow$ \texttt{evaluate} $\rightarrow$ explicabilité $\rightarrow$ export ONNX $\rightarrow$ registre sur données synthétiques ; contrat d'entrée et de sorties du modèle ONNX \\
+Explicabilité & CAM cohérente avec le CNN ; Attention Rollout du ViT, et parité entre la carte exportée en ONNX et la carte PyTorch \\
+Optimisation & quantification INT8 ; règles de promotion du registre (\texttt{staging}, \texttt{production}) \\
+Application complète & démarrage de la stack Docker et test de fumée en CI \\
+\bottomrule
+\end{tabularx}
+\caption{Stratégie de tests.}
+\end{table}
+
+\textbf{Monitoring.} L'API expose \texttt{/metrics} au format Prometheus : latence et volume par route, nombre de
+prédictions par verdict (\texttt{deepguard\_predictions\_total}) et d'images sans visage détecté
+(\texttt{deepguard\_no\_face\_total}), utiles pour repérer une dérive (par exemple une explosion du nombre de « fake »).
+Prometheus et Grafana se lancent avec le profil \texttt{monitoring}. Un test de charge Locust
+(\fichier{tests/load/locustfile.py}) mesure la latence de \texttt{/predict}.
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lcc@{}}
+\toprule
+\textbf{Scénario Locust} & \textbf{Requêtes/s} & \textbf{Latence p95 (ms)} \\
+\midrule
+\aremplir{décrire le scénario (utilisateurs, durée)} & \ar & \ar \\
+\bottomrule
+\end{tabular}
+\caption{Résultat du test de charge.}
+\end{table}
+
+\Needspace{8\baselineskip}
+\section{Limites et éthique}
+
+\begin{itemize}
+  \item Le modèle est entraîné sur des visages FFHQ (réels) et StyleGAN (générés) : les images produites par des
+        modèles de diffusion récents ne sont pas couvertes.
+  \item Une photo de webcam ou téléchargée sur le web (recompression, filtres, cadrage) diffère des images
+        d'entraînement : la précision réelle peut être inférieure à celle du jeu de test.
+  \item Le détecteur de visages OpenCV (cascade de Haar) est sensible aux visages de profil ou partiellement masqués.
+  \item Les cartes d'attention sont des indices et non des preuves.
+  \item Un modèle peut se tromper : un verdict ne doit pas être utilisé seul comme preuve.
+  \item Les images envoyées sont analysées en mémoire et ne sont pas conservées ; aucune photo de personne n'est
+        versionnée sans autorisation.
+\end{itemize}
+
+\section{Conclusion et perspectives}
+
+\nomprojet{} livre une chaîne complète : données versionnées, trois architectures comparées, explicabilité exportée avec
+le modèle, API typée et testée, interface interactive, images Docker multi-étapes, intégration continue et suivi des
+expériences avec registre. Le ViT-B/16 est le meilleur modèle (99,62\,\% d'exactitude sur le test, 15 erreurs sur 4\,000), mais il ne généralise pas au second jeu de données (53\,\%, AUC 0,49) : il détecte les visages générés par StyleGAN, pas les retouches ni les images d'autres générateurs.
+
+Perspectives : entraîner sur des images issues de modèles de diffusion récents ; mesurer la généralisation sur des visages générés par diffusion ; calibrer les probabilités (\emph{temperature scaling}) ; réduire la dépendance au cadrage (une option d'augmentation par recadrages aléatoires, \texttt{augment: scale}, est implémentée et testée en CI mais n'a pas encore été entraînée \aremplir{résultats du ViT « scale » si exécuté}) ; ajouter MixUp/CutMix et un
+rééquilibrage de classes, étendre la détection à la vidéo, détecter la dérive de données avec Evidently et déployer sur
+le cloud.
+
+\appendix
+\section{Reproduire le projet}
+
+\begin{lstlisting}
+# Application complete (modele de demonstration si aucun modele entraine)
+docker-compose up --build              # interface :3000, API :8000/docs
+
+# Pipeline ML (mini-echantillon pour tester)
+pip install torch torchvision
+pip install -r requirements-train.txt -r requirements-dev.txt
+dvc repro                              # prepare -> train -> evaluate -> explain -> export
+
+# Entrainement complet : notebooks/kaggle_train.ipynb (GPU Kaggle)
+# Tests et lint
+cd backend && pytest && cd .. && pytest tests -q && ruff check .
+\end{lstlisting}
+
+\section{Arborescence du dépôt}
+
+\begin{lstlisting}
+deepguard/
+|-- .github/workflows/        # ci-tests.yml, docker-build.yml
+|-- .dvc/  dvc.yaml  params.yaml
+|-- src/{data,models,utils}/  # Deep Learning
+|-- backend/                  # FastAPI, tests, Dockerfile, demo_model/
+|-- frontend/                 # React : components/, services/
+|-- notebooks/kaggle_train.ipynb
+|-- tests/  scripts/  monitoring/  mlflow/  docs/rapport/
+`-- docker-compose.yml
+\end{lstlisting}
+
+\end{document}
