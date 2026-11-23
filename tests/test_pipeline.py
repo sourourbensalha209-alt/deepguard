@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 import pytest
 import yaml
 from PIL import Image
@@ -65,6 +66,10 @@ def test_full_pipeline(workdir):
     results = json.loads(Path("metrics/test.json").read_text())
     assert {"test_accuracy", "test_f1", "test_roc_auc"} <= set(results)
     assert Path("reports/confusion_matrix.png").exists() and Path("reports/roc_curve.png").exists()
+    preds = pd.read_csv("reports/preds_test.csv")  # base des analyses (src/analysis)
+    assert list(preds.columns) == ["path", "label", "margin", "p_fake"] and len(preds) == 16
+    assert np.allclose(preds["p_fake"], 1 / (1 + np.exp(-preds["margin"])))
+    assert Path("reports/preds_val.csv").exists() and Path("metrics/history.json").exists()
 
     gradcam.main(n_per_class=2)
     assert Path("reports/heatmaps.png").exists()

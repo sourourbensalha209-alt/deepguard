@@ -191,6 +191,20 @@ Le ViT commet 15 erreurs sur 4 000 images de test (EfficientNet : 108, baseline 
 (photos réelles retouchées), les trois modèles ne font pas mieux que répondre toujours « réel » (53,0 %, AUC proche de 0,5) :
 ils détectent les visages générés par StyleGAN, pas les retouches ni les images d'autres générateurs.
 
+## Analyses complémentaires (rigueur scientifique)
+
+Toutes lancées par la section 8 de `notebooks/kaggle_train.ipynb`, à partir des prédictions image par image rangées dans
+`reports/runs/<expérience>_s<graine>/`. Chaque script écrit sa figure dans `docs/rapport/figures/` et son tableau dans
+`docs/rapport/generated/`, inclus automatiquement par le rapport (aucun chiffre recopié à la main).
+
+| Question | Script | Sortie |
+|---|---|---|
+| Les écarts entre modèles sont-ils significatifs ? | `python -m src.analysis.stats` | IC 95 % bootstrap, test de McNemar, moyenne ± écart-type sur plusieurs graines |
+| Les probabilités affichées sont-elles fiables ? | `python -m src.analysis.calibration` | ECE, NLL, Brier, diagramme de fiabilité, temperature scaling |
+| Y a-t-il du sur-apprentissage ? | `python -m src.analysis.learning_curves` | Pertes d'entraînement et de validation, F1 par époque |
+| Le modèle dépend-il du cadrage ? L'augmentation `scale` aide-t-elle ? | `python -m src.analysis.robustness` | Exactitude sous 10 dégradations, 1 000 images de test |
+| Qu'a appris le ViT ? | `python -m src.analysis.vit_internals` | Similarité des embeddings de position, distance d'attention par couche et par tête |
+
 ## Tests, CI/CD et qualité
 
 ```bash

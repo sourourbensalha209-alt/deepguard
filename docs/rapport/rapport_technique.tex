@@ -88,6 +88,10 @@
   \IfFileExists{figures/#2}{\begin{figure}[H]\centering\includegraphics[width=#1\linewidth]{figures/#2}\caption{#3}\label{#4}\end{figure}}%
   {\begin{encadre}[title=Figure à insérer]{accent}\aremplir{déposer \texttt{\detokenize{#2}} dans \texttt{figures/} : #3}\end{encadre}}}
 \newcommand{\ar}{\textcolor{accent}{\textbf{?}}}
+% \genere{nom}{description} : inclut docs/rapport/generated/nom.tex, écrit par les scripts de src/analysis
+% (aucun chiffre recopié à la main) ; sinon, encadré « à générer ».
+\newcommand{\genere}[2]{\IfFileExists{generated/#1.tex}{\input{generated/#1.tex}}%
+  {\begin{encadre}[title=Résultat à générer]{accent}\aremplir{#2}\end{encadre}}}
 \DeclareRobustCommand{\fichier}[1]{\texttt{\StrSubstitute{\detokenize{#1}}{/}{/\allowbreak}}}
 
 \begin{document}
@@ -200,7 +204,6 @@ Ghaith \textsc{Aouissaoui} & API FastAPI, interface React, Docker, CI/CD GitHub 
 \end{tabularx}
 \caption{Répartition des responsabilités. Les deux membres sont solidaires de l'ensemble des livrables ; l'historique Git (commits et Pull Requests) détaille la contribution de chacun.}
 \end{table}
-\aremplir{ajuster ce tableau à la répartition réelle des tâches}
 
 \newpage
 % =====================================================================
@@ -279,6 +282,18 @@ Optimiseur AdamW (décroissance de poids $0{,}01$), planificateur cosinus, préc
 d'entropie croisée. Le meilleur point de contrôle est retenu sur le \textbf{F1 de validation}, avec la classe « fake »
 comme classe positive. Graine fixée (42). Chaque modèle est entraîné une seule fois, sur GPU Kaggle (T4~$\times$2), sur 20\,000 images d'entraînement (sur 100\,000 disponibles), avec 4\,000 images de validation et 4\,000 images de test (sur 20\,000 disponibles pour chacun).
 
+\textbf{Variante \texttt{scale} du ViT.} Le test de robustesse (section~\ref{sec:robustesse}) montre que le modèle dépend
+du cadrage. Une seconde version du ViT, aux hyperparamètres identiques, est entraînée avec l'augmentation
+\texttt{augment: scale} : recadrage aléatoire couvrant 50 à 100\,\% de l'image avec un léger changement de proportions
+(\texttt{RandomResizedCrop}), appliqué uniquement à l'entraînement.
+
+\textbf{Protocole d'évaluation statistique.} Toutes les prédictions de validation et de test sont enregistrées image par
+image (marge $z=\ell_{\text{fake}}-\ell_{\text{real}}$ et $P(\text{fake})=\sigma(z)$), ce qui permet, sans réentraîner :
+des intervalles de confiance à 95\,\% par \emph{bootstrap} (2\,000 ré-échantillonnages du test) ; un test exact de
+McNemar entre deux modèles évalués sur les mêmes images ; la mesure de la calibration. Quand le temps GPU le permet,
+EfficientNet et le ViT sont aussi entraînés avec les graines 1 et 2 pour mesurer la variabilité due à l'entraînement.
+Les scripts sont dans \fichier{src/analysis/} et testés en intégration continue (\fichier{tests/test_analysis.py}).
+
 \section{Explicabilité}
 
 \textbf{CNN : CAM.} Pour une tête « pooling global + couche linéaire », Grad-CAM est équivalent à CAM : la carte de la
@@ -339,12 +354,25 @@ ViT-B/16 & \textbf{0,996} & \textbf{0,996} & \textbf{1,000} & \textbf{15} \\
 \caption{Évaluation sur le jeu de test (4\,000 images, classe positive : « fake »). Le ViT commet environ 7 fois moins d'erreurs qu'EfficientNet et 44 fois moins que la baseline.}
 \end{table}
 
-À titre indicatif (approximation binomiale à 95\,\%), l'incertitude sur l'exactitude est d'environ $\pm0{,}2$ point pour le
-ViT et $\pm0{,}5$ point pour EfficientNet : l'écart entre les deux modèles (2,3 points) dépasse largement ces marges. Les
-chiffres reposent toutefois sur un seul entraînement par modèle : la variabilité entre graines n'a pas été mesurée.
+L'incertitude de ces chiffres et la significativité des écarts sont mesurées en section~\ref{sec:stats}.
 
 \figureou[0.5]{confusion_matrix.png}{Matrice de confusion du ViT-B/16 sur le jeu de test : 7 vrais visages classés « fake » et 8 faux classés « real ».}{fig:cm}
 \figureou[0.5]{roc_curve.png}{Courbe ROC du ViT-B/16 sur le jeu de test (AUC $=1{,}000$ à l'arrondi).}{fig:roc}
+
+\subsection{Courbes d'apprentissage}
+\figureou[1.0]{learning_curves.png}{Perte d'entraînement (moyenne sur 10\,\% d'époque), pertes d'entraînement et de validation par époque, et F1 de validation.}{fig:curves}
+\genere{learning_curves}{lancer \texttt{python -m src.analysis.learning\_curves} (section 8 du notebook)}
+
+Ces courbes justifient le nombre d'époques : un modèle pré-entraîné converge en peu d'époques sur un problème binaire
+à 20\,000 images, et la sélection du checkpoint sur la validation protège du sur-apprentissage tardif.
+
+\subsection{Intervalles de confiance et significativité}\label{sec:stats}
+\genere{stats}{lancer \texttt{python -m src.analysis.stats} (section 8 du notebook)}
+
+L'intervalle bootstrap traduit l'incertitude due à la taille finie du jeu de test ; il ne couvre pas la variabilité
+due à l'entraînement (initialisation, ordre des lots), mesurée séparément par plusieurs graines quand elles sont
+disponibles. Le test de McNemar est le test adapté à deux classifieurs évalués sur les mêmes images : il ne compare
+que les images où un seul des deux modèles se trompe.
 
 \subsection{Généralisation au second jeu de données}
 
@@ -380,6 +408,11 @@ et les bords ou l'arrière-plan pour les vrais visages. Les cartes sont grossiè
 pour EfficientNet. Huit exemples ne permettent aucune conclusion générale, et ces cartes indiquent où le modèle a
 regardé, pas pourquoi il décide.
 
+\subsection{Ce que le ViT a appris : embeddings de position et distance d'attention}
+\figureou[0.6]{vit_pos_embed.png}{Similarité cosinus entre les embeddings de position des 196 patchs du ViT fine-tuné : la petite carte en ligne $i$, colonne $j$ montre la similarité du patch $(i,j)$ avec tous les autres.}{fig:posemb}
+\figureou[0.75]{vit_attention_distance.png}{Distance moyenne d'attention (pixels) de chacune des 12 têtes, couche par couche, pour le ViT fine-tuné et pour les poids ImageNet de départ (64 images de test).}{fig:attdist}
+\genere{vit_internals}{lancer \texttt{python -m src.analysis.vit\_internals} (section 8 du notebook)}
+
 \subsection{Optimisation de l'inférence}
 
 \begin{table}[H]
@@ -404,7 +437,7 @@ test : le modèle déployé est le FP32. Dans l'application (Docker sur un ordin
 mesuré va de 0,2 à 2,3~s selon l'image et la charge de la machine, et il atteint 7,6~s au premier appel (démarrage à
 froid) ; il inclut la détection du visage et le calcul de la carte d'attention.
 
-\subsection{Robustesse sur une image générée}
+\subsection{Robustesse sur une image générée}\label{sec:robustesse}
 
 Le ViT déployé a été testé sur une seule image générée par StyleGAN, dégradée de plusieurs façons par le script de
 robustesse du dépôt (\fichier{scripts/robustness_test.py}). Ce test est qualitatif : une seule image ne permet pas de
@@ -432,6 +465,24 @@ recadrage central, alors que le visage reste détecté : il dépend du cadrage e
 dans les données d'entraînement. Ces sorties sont presque toujours proches de 0 ou de 100\,\% : les probabilités ne sont
 pas calibrées.
 
+\subsection{Robustesse quantitative et augmentation \texttt{scale}}
+Pour dépasser l'exemple unique ci-dessus, les mêmes familles de dégradations sont appliquées à 1\,000 images du test
+(500 réelles, 500 générées), auxquelles s'ajoutent un dézoom (image réduite sur un fond uni) et un décalage de 10\,\%
+(\fichier{src/analysis/robustness.py}). Le ViT entraîné avec l'augmentation \texttt{scale} est comparé au ViT d'origine.
+
+\figureou[1.0]{robustness.png}{Exactitude de chaque modèle sous dégradation (1\,000 images de test équilibrées).}{fig:robust}
+\genere{robustness}{lancer \texttt{python -m src.analysis.robustness} pour chaque modèle puis \texttt{--report} (section 8 du notebook)}
+
+\subsection{Calibration des probabilités}\label{sec:calib}
+L'interface affiche une probabilité : elle doit être interprétable. Un modèle est \emph{calibré} si, parmi les images
+auxquelles il attribue 80\,\% de probabilité « fake », environ 80\,\% sont réellement fausses. On mesure l'erreur de
+calibration attendue (ECE, 15 intervalles de confiance), la log-vraisemblance négative (NLL) et le score de Brier, puis on
+applique le \emph{temperature scaling} (Guo et al., 2017) : $P(\text{fake})=\sigma(z/T)$, avec $T$ appris sur la
+validation. Diviser la marge par $T$ ne change ni les prédictions ni l'AUC, seulement la confiance affichée.
+
+\figureou[1.0]{calibration.png}{Diagrammes de fiabilité sur le test : proportion réelle de « fake » en fonction de la probabilité prédite, avant (rouge) et après (bleu) temperature scaling.}{fig:calib}
+\genere{calibration}{lancer \texttt{python -m src.analysis.calibration} (section 8 du notebook)}
+
 \subsection{Tests qualitatifs sur des images réelles}
 
 Trois essais ont été faits dans l'application, à titre d'illustration. Un vrai visage de face est jugé « réel » à
@@ -444,25 +495,45 @@ désormais « Résultat non fiable » dans ce cas.
 
 \begin{enumerate}
   \item \textbf{Quel modèle gagne ?} Le ViT-B/16 : 99,62\,\% d'exactitude sur le test (15 erreurs sur 4\,000), contre 97,3\,\%
-        pour EfficientNet (108 erreurs) et 83,6\,\% pour la baseline (656 erreurs).
+        pour EfficientNet (108 erreurs) et 83,6\,\% pour la baseline (656 erreurs). La section~\ref{sec:stats} indique si
+        cet écart reste significatif une fois l'incertitude du test prise en compte (intervalles bootstrap, McNemar).
+  \item \textbf{Pourquoi le ViT fait-il mieux ?} Deux facteurs se combinent. (a) Le pré-entraînement : la baseline, apprise
+        \emph{from scratch} avec 0,39~M de paramètres, plafonne à 83,6\,\% ; les deux modèles pré-entraînés sur ImageNet
+        dépassent 97\,\%. (b) L'auto-attention globale : dès la première couche, certaines têtes du ViT relient des patchs
+        éloignés (figure~\ref{fig:attdist}), alors qu'un CNN n'agrège l'information globale qu'en fin de réseau. Or les
+        artefacts de StyleGAN sont souvent globaux : asymétries (boucles d'oreilles, yeux), arrière-plan incohérent,
+        texture des cheveux. Ce lien reste une hypothèse : il faudrait une ablation (ViT sans pré-entraînement, ou CNN de
+        même taille) pour séparer les deux effets.
   \item \textbf{Son coût est-il justifié ?} Il a 4 fois plus de paramètres qu'EfficientNet (85,8~M contre 22,2~M) et une
         latence ONNX 4,6 fois plus élevée (204~ms contre 44~ms), pour environ 7 fois moins d'erreurs. Son temps
         d'entraînement est comparable (594~s contre 409~s). Pour un usage où 0,2 à 2~s par image sont acceptables, le gain
-        justifie le coût ; pour un usage en temps réel, EfficientNet est un compromis plus économique.
-  \item \textbf{Que montrent les cartes ?} Voir la section « Explicabilité » : le ViT regarde surtout le haut du front, les
-        bords et l'arrière-plan, plus que les yeux et la bouche. Sur 8 images, cela reste une observation, pas une preuve.
+        justifie le coût ; pour un usage en temps réel, EfficientNet est un compromis plus économique. La quantification
+        INT8 réduit le ViT à 87~Mo et le rend 26\,\% plus rapide, mais elle doit encore être validée sur le jeu de test.
+  \item \textbf{Que montrent les cartes ?} Le ViT regarde surtout le haut du front, les bords et l'arrière-plan, plus que
+        les yeux et la bouche. Sur 8 images, c'est une observation et non une preuve, mais elle est cohérente avec le point
+        suivant : le modèle exploite aussi des indices qui ne sont pas propres au visage.
+  \item \textbf{Apprentissage par raccourci (\emph{shortcut learning}).} Les deux classes du jeu d'entraînement ont un cadrage
+        identique et très normalisé (visages FFHQ alignés, yeux à position fixe). Un simple recadrage central de 80\,\% fait
+        passer une image générée de 99,9\,\% à 0,2\,\% de probabilité « fake » : le modèle a appris en partie la combinaison
+        « cadrage FFHQ + texture StyleGAN », pas seulement la texture. La section~\ref{sec:robustesse} mesure cette
+        dépendance sur 1\,000 images et l'effet de l'augmentation \texttt{scale}, qui vise précisément à casser ce raccourci.
   \item \textbf{Pourquoi la performance s'effondre-t-elle sur le second jeu ?} Les « faux » de ce jeu sont des photos
         réelles retouchées, alors que les modèles ont appris sur des visages entièrement générés par StyleGAN. Notre
-        hypothèse, non testée, est qu'ils ont appris les traces propres à StyleGAN (et non une notion générale de
-        falsification), et que la résolution ($600\times600$ contre $256\times256$) et la chaîne de compression
-        différentes de ce jeu déplacent aussi la distribution des images.
+        hypothèse est qu'ils ont appris les traces propres à StyleGAN (et non une notion générale de falsification), et
+        que la résolution ($600\times600$ contre $256\times256$), la chaîne de compression et le cadrage différents de ce
+        jeu déplacent aussi la distribution des images. Une exactitude de 99,6\,\% en distribution ne dit donc rien de la
+        performance sur d'autres générateurs : c'est la limite principale du projet.
+  \item \textbf{Les probabilités sont-elles fiables ?} Les sorties sont presque toujours proches de 0 ou de 1. Le
+        temperature scaling (section~\ref{sec:calib}) corrige la confiance affichée sans changer les décisions ; la température
+        apprise devrait être intégrée à l'API.
   \item \textbf{Quels cas d'erreur ?} Sur le test, 7 vrais visages sont classés « fake » et 8 faux sont classés « real ».
-        Ces 15 images n'ont pas été examinées une à une, ce qui est une piste d'analyse.
+        Les prédictions image par image (\fichier{reports/runs/vit\_s42/preds\_test.csv}) permettent d'examiner ces 15
+        images une à une, ce qui est une piste d'analyse.
+  \item \textbf{Rigueur du protocole.} Le découpage est fourni par le jeu de données, les augmentations ne touchent que
+        l'entraînement, le checkpoint est choisi sur la validation et le test n'est utilisé qu'une fois. Les limites
+        restantes : 20\,\% des données d'entraînement utilisées, 3 époques, pas de recherche d'hyperparamètres
+        systématique.
 \end{enumerate}
-
-\begin{encadre}[title=Relecture à faire]{orange}
-\aremplir{relire cette analyse avec tes propres observations ; mettre à jour les chiffres si tu relances un entraînement}
-\end{encadre}
 
 \newpage
 % =====================================================================
@@ -677,7 +748,7 @@ Prometheus et Grafana se lancent avec le profil \texttt{monitoring}. Un test de 
 le modèle, API typée et testée, interface interactive, images Docker multi-étapes, intégration continue et suivi des
 expériences avec registre. Le ViT-B/16 est le meilleur modèle (99,62\,\% d'exactitude sur le test, 15 erreurs sur 4\,000), mais il ne généralise pas au second jeu de données (53\,\%, AUC 0,49) : il détecte les visages générés par StyleGAN, pas les retouches ni les images d'autres générateurs.
 
-Perspectives : entraîner sur des images issues de modèles de diffusion récents ; mesurer la généralisation sur des visages générés par diffusion ; calibrer les probabilités (\emph{temperature scaling}) ; réduire la dépendance au cadrage (une option d'augmentation par recadrages aléatoires, \texttt{augment: scale}, est implémentée et testée en CI mais n'a pas encore été entraînée \aremplir{résultats du ViT « scale » si exécuté}) ; ajouter MixUp/CutMix et un
+Perspectives : entraîner sur des images issues de modèles de diffusion récents ; mesurer la généralisation sur des visages générés par diffusion ; intégrer à l'API la température de calibration mesurée en section~\ref{sec:calib} ; poursuivre la réduction de la dépendance au cadrage amorcée par l'augmentation \texttt{scale} (section~\ref{sec:robustesse}), par exemple avec des recadrages plus agressifs ou un entraînement sur des visages non alignés ; séparer l'effet du pré-entraînement et de l'auto-attention par une ablation ; utiliser les 100\,000 images d'entraînement ; ajouter MixUp/CutMix et un
 rééquilibrage de classes, étendre la détection à la vidéo, détecter la dérive de données avec Evidently et déployer sur
 le cloud.
 

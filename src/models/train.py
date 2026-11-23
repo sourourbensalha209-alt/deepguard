@@ -13,7 +13,7 @@ import mlflow
 from src.data.dataset import FaceDataset, get_transform
 from src.models.architecture import build_model, describe_vit
 from src.utils.config import get_device, git_sha, load_params
-from src.utils.metrics import compute_metrics, predict
+from src.utils.metrics import binary_log_loss, compute_metrics, predict
 
 
 def main():
@@ -49,7 +49,8 @@ def main():
     Path("metrics").mkdir(exist_ok=True)
 
     mlflow.set_experiment("deepguard")
-    with mlflow.start_run(run_name=t["model"]) as run:
+    run_name = f"{t['model']}-{t.get('augment', 'basic')}-s{params['seed']}"
+    with mlflow.start_run(run_name=run_name) as run:
         mlflow.set_tag("git_sha", git_sha())
         mlflow.log_params(
             {
@@ -61,11 +62,15 @@ def main():
             }
         )
         best, start = {"f1": -1.0}, time.time()
+        # Historique pour les courbes d'apprentissage (src/analysis/learning_curves.py)
+        history = {"model": t["model"], "augment": t.get("augment", "basic"), "seed": params["seed"]}
+        history.update({"steps": [], "epochs": []})
+        log_every = max(1, len(train_dl) // 10)  # 10 points de perte d'entraînement par époque
 
         for epoch in range(t["epochs"]):
             model.train()
-            running = 0.0
-            for x, y in train_dl:
+            running, window = 0.0, []
+            for step, (x, y) in enumerate(train_dl, start=1):
                 x, y = x.to(device, non_blocking=True), y.to(device, non_blocking=True)
                 opt.zero_grad(set_to_none=True)
                 with torch.autocast(device.type, enabled=cuda):
@@ -75,12 +80,29 @@ def main():
                 scaler.update()
                 sched.step()
                 running += loss.item() * len(y)
+                window.append(loss.item())
+                if step % log_every == 0:
+                    history["steps"].append(
+                        {"epoch": epoch + step / len(train_dl), "train_loss": float(np.mean(window))}
+                    )
+                    window = []
 
-            m = compute_metrics(*predict(model, val_dl, device))
+            y_val, p_val = predict(model, val_dl, device)
+            m = compute_metrics(y_val, p_val)
+            train_loss, val_loss = running / len(train_dl.dataset), binary_log_loss(y_val, p_val)
             mlflow.log_metrics(
-                {"train_loss": running / len(train_dl.dataset), **{f"val_{k}": v for k, v in m.items()}},
+                {"train_loss": train_loss, "val_loss": val_loss, **{f"val_{k}": v for k, v in m.items()}},
                 step=epoch,
             )
+            history["epochs"].append(
+                {
+                    "epoch": epoch + 1,
+                    "train_loss": train_loss,
+                    "val_loss": val_loss,
+                    **{f"val_{k}": float(v) for k, v in m.items()},
+                }
+            )
+            Path("metrics/history.json").write_text(json.dumps(history, indent=2), encoding="utf-8")
             print(f"epoch {epoch + 1}/{t['epochs']}  val_f1={m['f1']:.4f}  val_auc={m['roc_auc']:.4f}")
             if m["f1"] > best["f1"]:
                 best = m
@@ -90,6 +112,8 @@ def main():
         mlflow.log_metric("train_time_s", elapsed)
         summary = {
             "model": t["model"],
+            "augment": t.get("augment", "basic"),
+            "seed": params["seed"],
             "run_id": run.info.run_id,
             "git_sha": git_sha(),
             "n_params_m": round(n_params, 2),
