@@ -47,6 +47,8 @@ stages:
     outs:
       - reports/confusion_matrix.png
       - reports/roc_curve.png
+      - reports/preds_val.csv        # prédictions image par image : statistiques et calibration (src/analysis)
+      - reports/preds_test.csv
     metrics:
       - metrics/test.json:
           cache: false
