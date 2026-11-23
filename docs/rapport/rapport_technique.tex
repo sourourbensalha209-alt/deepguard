@@ -321,10 +321,10 @@ le jeu de test.
 
 \section{Résultats et analyse}
 
-Tous les chiffres proviennent d'une exécution unique de chaque modèle (graine 42), sur les sous-ensembles décrits
-en section~5.4. Les latences sont mesurées sur CPU, sur la machine du notebook Kaggle, avec une image à la fois.
+Sauf mention contraire, les chiffres proviennent de l'entraînement de graine 42 de chaque modèle, sur les sous-ensembles
+décrits en section~5.4 ; EfficientNet et le ViT ont en plus été entraînés avec les graines 1 et 2 (section~\ref{sec:stats}). Les latences sont mesurées sur CPU, sur la machine du notebook Kaggle, avec une image à la fois.
 
-\subsection{Comparaison des trois modèles}
+\subsection{Comparaison des modèles}
 
 \begin{table}[H]
 \centering\small
@@ -332,12 +332,13 @@ en section~5.4. Les latences sont mesurées sur CPU, sur la machine du notebook 
 \toprule
 \textbf{Modèle} & \textbf{Params (M)} & \textbf{Durée (s)} & \textbf{Acc. val} & \textbf{F1 val} & \textbf{AUC val} \\
 \midrule
-Baseline CNN & 0,39 & 927 & 0,840 & 0,842 & 0,919 \\
-EfficientNet-V2-S & 22,15 & 409 & 0,968 & 0,968 & 0,996 \\
-ViT-B/16 & 85,80 & 594 & \textbf{0,998} & \textbf{0,998} & \textbf{1,000} \\
+Baseline CNN & 0,39 & 675 & 0,840 & 0,842 & 0,919 \\
+EfficientNet-V2-S & 22,15 & 391 & 0,968 & 0,968 & 0,996 \\
+ViT-B/16 & 85,80 & 563 & \textbf{0,998} & \textbf{0,998} & \textbf{1,000} \\
+ViT-B/16 (\texttt{scale}) & 85,80 & 567 & \textbf{0,998} & \textbf{0,998} & \textbf{1,000} \\
 \bottomrule
 \end{tabular}
-\caption{Entraînement et validation (4\,000 images). Durée : temps d'entraînement complet (10 époques pour la baseline, 3 pour les deux autres).}
+\caption{Entraînement et validation (4\,000 images). Durée : temps d'entraînement complet (10 époques pour la baseline, 3 pour les autres), sur GPU T4.}
 \end{table}
 
 \begin{table}[H]
@@ -347,16 +348,17 @@ ViT-B/16 & 85,80 & 594 & \textbf{0,998} & \textbf{0,998} & \textbf{1,000} \\
 \textbf{Modèle} & \textbf{Acc. test} & \textbf{F1 test} & \textbf{AUC test} & \textbf{Erreurs / 4\,000} \\
 \midrule
 Baseline CNN & 0,836 & 0,837 & 0,921 & 656 \\
-EfficientNet-V2-S & 0,973 & 0,973 & 0,996 & 108 \\
-ViT-B/16 & \textbf{0,996} & \textbf{0,996} & \textbf{1,000} & \textbf{15} \\
+EfficientNet-V2-S & 0,971 & 0,971 & 0,996 & 115 \\
+ViT-B/16 & 0,997 & 0,997 & 1,000 & 11 \\
+ViT-B/16 (\texttt{scale}) & \textbf{0,999} & \textbf{0,999} & \textbf{1,000} & \textbf{6} \\
 \bottomrule
 \end{tabular}
-\caption{Évaluation sur le jeu de test (4\,000 images, classe positive : « fake »). Le ViT commet environ 7 fois moins d'erreurs qu'EfficientNet et 44 fois moins que la baseline.}
+\caption{Évaluation sur le jeu de test (4\,000 images, classe positive : « fake »). Le ViT commet environ 10 fois moins d'erreurs qu'EfficientNet et 60 fois moins que la baseline.}
 \end{table}
 
 L'incertitude de ces chiffres et la significativité des écarts sont mesurées en section~\ref{sec:stats}.
 
-\figureou[0.5]{confusion_matrix.png}{Matrice de confusion du ViT-B/16 sur le jeu de test : 7 vrais visages classés « fake » et 8 faux classés « real ».}{fig:cm}
+\figureou[0.5]{confusion_matrix.png}{Matrice de confusion du ViT-B/16 sur le jeu de test : 8 vrais visages classés « fake » et 3 faux classés « real ».}{fig:cm}
 \figureou[0.5]{roc_curve.png}{Courbe ROC du ViT-B/16 sur le jeu de test (AUC $=1{,}000$ à l'arrondi).}{fig:roc}
 
 \subsection{Courbes d'apprentissage}
@@ -383,8 +385,9 @@ que les images où un seul des deux modèles se trompe.
 \textbf{Modèle} & \textbf{Exactitude} & \textbf{F1 (classe fake)} & \textbf{AUC} \\
 \midrule
 Baseline CNN & 0,539 & 0,131 & 0,542 \\
-EfficientNet-V2-S & 0,524 & 0,040 & 0,479 \\
-ViT-B/16 & 0,529 & 0,006 & 0,487 \\
+EfficientNet-V2-S & 0,525 & 0,042 & 0,483 \\
+ViT-B/16 & 0,529 & 0,000 & 0,500 \\
+ViT-B/16 (\texttt{scale}) & 0,530 & 0,006 & 0,488 \\
 \midrule
 Répondre toujours « réel » & 0,530 & 0 & 0,500 \\
 \bottomrule
@@ -392,9 +395,10 @@ Répondre toujours « réel » & 0,530 & 0 & 0,500 \\
 \caption{Test de généralisation sur \emph{Real and Fake Face Detection} (1\,081 visages réels, 960 visages retouchés).}
 \end{table}
 
-Sur ce jeu, les trois modèles ne font pas mieux qu'un classifieur qui répondrait toujours « réel » (53,0\,\% de visages
-réels) : leur AUC est proche de $0{,}5$ et le F1 du ViT sur la classe « fake » est de 0,006, il ne prédit presque jamais
-« fake ». La chute est donc complète, et non une simple baisse de performance.
+Sur ce jeu, aucun modèle ne fait mieux qu'un classifieur qui répondrait toujours « réel » (53,0\,\% de visages
+réels) : leur AUC est proche de $0{,}5$ et le F1 du ViT sur la classe « fake » est nul, il ne prédit jamais « fake ».
+L'augmentation \texttt{scale} n'y change rien : rendre le modèle robuste au cadrage ne lui apprend pas à reconnaître des
+retouches. La chute est donc complète, et non une simple baisse de performance.
 
 \subsection{Explicabilité}
 
@@ -423,13 +427,13 @@ regardé, pas pourquoi il décide.
 \midrule
 Baseline CNN & 20,3 & 14,5 & 61,1 & 1,56 / 0,40 & 0,0002 \\
 EfficientNet-V2-S & 99,9 & 44,0 & 369,5 & 88,4 / 22,9 & 0,0001 \\
-ViT-B/16 & 235,9 & 203,9 & \textbf{151,4} & 343,3 / \textbf{86,9} & 0,0329 \\
+ViT-B/16 & 229,0 & 193,3 & \textbf{142,5} & 343,3 / \textbf{86,9} & 0,059 \\
 \bottomrule
 \end{tabular}
-\caption{Latences médianes p50 en ms (CPU, une image) pour PyTorch, ONNX Runtime (FP32) et INT8 ; taille ONNX FP32 / INT8 ; écart maximal de probabilité entre INT8 et FP32 sur des entrées aléatoires (source : \fichier{metrics/export.json}). L'écart entre PyTorch et ONNX Runtime est inférieur à $2\cdot10^{-5}$ pour les trois modèles.}
+\caption{Latences médianes p50 en ms (CPU, une image) pour PyTorch, ONNX Runtime (FP32) et INT8 ; taille ONNX FP32 / INT8 ; écart maximal de probabilité entre INT8 et FP32 sur des entrées aléatoires (source : \fichier{metrics/export.json}). L'écart entre PyTorch et ONNX Runtime est inférieur à $2\cdot10^{-5}$ pour les trois modèles. Lignes baseline et EfficientNet : mesures du premier entraînement.}
 \end{table}
 
-L'export ONNX réduit la latence de 1,4 fois (baseline), 2,3 fois (EfficientNet) et 1,16 fois (ViT). La quantification INT8
+L'export ONNX réduit la latence de 1,4 fois (baseline), 2,3 fois (EfficientNet) et 1,18 fois (ViT). La quantification INT8
 dynamique n'est utile que pour le ViT : le modèle est 4 fois plus petit (343 $\to$ 87~Mo) et 26\,\% plus rapide que le
 FP32 ; pour les deux CNN, elle est \emph{plus lente} (4 fois pour la baseline, 8 fois pour EfficientNet), car la
 quantification dynamique cible surtout les produits matriciels. La version INT8 du ViT n'a pas été évaluée sur le jeu de
@@ -462,8 +466,10 @@ Recadrage central 80 / 60\,\% & \textbf{REAL} / \textbf{REAL} & 0,2 / 0,0\,\% \\
 
 Le modèle résiste à la compression, au flou et au bruit, mais bascule sur « réel » à 32 pixels et après un simple
 recadrage central, alors que le visage reste détecté : il dépend du cadrage et de l'échelle du visage, qui sont fixes
-dans les données d'entraînement. Ces sorties sont presque toujours proches de 0 ou de 100\,\% : les probabilités ne sont
-pas calibrées.
+dans les données d'entraînement. Ces sorties restent proches de 0 ou de 100\,\% même quand le modèle se trompe : sur des
+images éloignées de la distribution d'entraînement, sa confiance n'est pas fiable (la calibration, mesurée en
+section~\ref{sec:calib}, n'est valable qu'en distribution). Ce test a été fait via l'application, avec le ViT du premier
+entraînement.
 
 \subsection{Robustesse quantitative et augmentation \texttt{scale}}
 Pour dépasser l'exemple unique ci-dessus, les mêmes familles de dégradations sont appliquées à 1\,000 images du test
@@ -494,9 +500,11 @@ désormais « Résultat non fiable » dans ce cas.
 \subsection{Analyse critique}
 
 \begin{enumerate}
-  \item \textbf{Quel modèle gagne ?} Le ViT-B/16 : 99,62\,\% d'exactitude sur le test (15 erreurs sur 4\,000), contre 97,3\,\%
-        pour EfficientNet (108 erreurs) et 83,6\,\% pour la baseline (656 erreurs). La section~\ref{sec:stats} indique si
-        cet écart reste significatif une fois l'incertitude du test prise en compte (intervalles bootstrap, McNemar).
+  \item \textbf{Quel modèle gagne ?} Les deux ViT : 99,72\,\% d'exactitude sur le test pour le ViT (11 erreurs sur 4\,000) et
+        99,85\,\% pour le ViT \texttt{scale} (6 erreurs), contre 97,1\,\% pour EfficientNet (115 erreurs) et 83,6\,\% pour la
+        baseline (656 erreurs). L'avantage des ViT sur les CNN est significatif (McNemar, $p<10^{-4}$) et stable d'une
+        graine à l'autre (ViT : 99,6 $\pm$ 0,1\,\% ; EfficientNet : 97,3 $\pm$ 0,1\,\%). En revanche, les deux ViT ne se
+        distinguent pas statistiquement sur le test ($p=0{,}23$) : c'est la robustesse qui les départage (point 6).
   \item \textbf{Pourquoi le ViT fait-il mieux ?} Deux facteurs se combinent. (a) Le pré-entraînement : la baseline, apprise
         \emph{from scratch} avec 0,39~M de paramètres, plafonne à 83,6\,\% ; les deux modèles pré-entraînés sur ImageNet
         dépassent 97\,\%. (b) L'auto-attention globale : dès la première couche, certaines têtes du ViT relient des patchs
@@ -505,30 +513,42 @@ désormais « Résultat non fiable » dans ce cas.
         texture des cheveux. Ce lien reste une hypothèse : il faudrait une ablation (ViT sans pré-entraînement, ou CNN de
         même taille) pour séparer les deux effets.
   \item \textbf{Son coût est-il justifié ?} Il a 4 fois plus de paramètres qu'EfficientNet (85,8~M contre 22,2~M) et une
-        latence ONNX 4,6 fois plus élevée (204~ms contre 44~ms), pour environ 7 fois moins d'erreurs. Son temps
-        d'entraînement est comparable (594~s contre 409~s). Pour un usage où 0,2 à 2~s par image sont acceptables, le gain
+        latence ONNX 4,4 fois plus élevée (193~ms contre 44~ms), pour environ 10 fois moins d'erreurs. Son temps
+        d'entraînement est comparable (563~s contre 391~s). Pour un usage où 0,2 à 2~s par image sont acceptables, le gain
         justifie le coût ; pour un usage en temps réel, EfficientNet est un compromis plus économique. La quantification
-        INT8 réduit le ViT à 87~Mo et le rend 26\,\% plus rapide, mais elle doit encore être validée sur le jeu de test.
+        INT8 réduit le ViT à 87~Mo et le rend 26\,\% plus rapide (143~ms), mais elle modifie la probabilité jusqu'à 0,06 sur
+        des entrées aléatoires : elle doit être validée sur le jeu de test avant d'être déployée.
   \item \textbf{Que montrent les cartes ?} Le ViT regarde surtout le haut du front, les bords et l'arrière-plan, plus que
         les yeux et la bouche. Sur 8 images, c'est une observation et non une preuve, mais elle est cohérente avec le point
         suivant : le modèle exploite aussi des indices qui ne sont pas propres au visage.
   \item \textbf{Apprentissage par raccourci (\emph{shortcut learning}).} Les deux classes du jeu d'entraînement ont un cadrage
         identique et très normalisé (visages FFHQ alignés, yeux à position fixe). Un simple recadrage central de 80\,\% fait
-        passer une image générée de 99,9\,\% à 0,2\,\% de probabilité « fake » : le modèle a appris en partie la combinaison
-        « cadrage FFHQ + texture StyleGAN », pas seulement la texture. La section~\ref{sec:robustesse} mesure cette
-        dépendance sur 1\,000 images et l'effet de l'augmentation \texttt{scale}, qui vise précisément à casser ce raccourci.
+        passer une image générée de 99,9\,\% à 0,2\,\% de probabilité « fake ». Sur 1\,000 images, un recadrage de 60\,\% fait
+        chuter le ViT de 99,8\,\% à 61,8\,\% d'exactitude, et il ne détecte plus que 24\,\% des faux : le modèle a appris en
+        partie la combinaison « cadrage FFHQ + texture StyleGAN », pas seulement la texture.
+  \item \textbf{L'augmentation \texttt{scale} corrige-t-elle ce raccourci ?} Oui, en grande partie. Avec des recadrages
+        aléatoires à l'entraînement, l'exactitude moyenne sur les quatre dégradations de cadrage passe de 83,3\,\% à
+        98,0\,\% (recadrage 60\,\% : 61,8 $\to$ 98,1\,\%), sans perte sur le test (99,85\,\%). En contrepartie, le ViT
+        \texttt{scale} résiste moins bien à la compression JPEG (qualité 20 : 94,6 $\to$ 86,8\,\%) et un peu moins au flou
+        (97,9 $\to$ 95,0\,\%). Notre hypothèse : privé de l'indice de cadrage, il s'appuie davantage sur les détails fins
+        (hautes fréquences) laissés par StyleGAN, précisément ce que la compression et le flou effacent. Il s'agit donc
+        d'un compromis, pas d'un gain gratuit ; comme une photo réelle est rarement cadrée comme FFHQ, nous retenons le
+        ViT \texttt{scale} comme modèle recommandé pour le déploiement, en combinant à l'avenir les deux augmentations
+        (recadrage et compression JPEG).
   \item \textbf{Pourquoi la performance s'effondre-t-elle sur le second jeu ?} Les « faux » de ce jeu sont des photos
         réelles retouchées, alors que les modèles ont appris sur des visages entièrement générés par StyleGAN. Notre
         hypothèse est qu'ils ont appris les traces propres à StyleGAN (et non une notion générale de falsification), et
         que la résolution ($600\times600$ contre $256\times256$), la chaîne de compression et le cadrage différents de ce
-        jeu déplacent aussi la distribution des images. Une exactitude de 99,6\,\% en distribution ne dit donc rien de la
+        jeu déplacent aussi la distribution des images. Une exactitude de 99,7\,\% en distribution ne dit donc rien de la
         performance sur d'autres générateurs : c'est la limite principale du projet.
-  \item \textbf{Les probabilités sont-elles fiables ?} Les sorties sont presque toujours proches de 0 ou de 1. Le
-        temperature scaling (section~\ref{sec:calib}) corrige la confiance affichée sans changer les décisions ; la température
-        apprise devrait être intégrée à l'API.
-  \item \textbf{Quels cas d'erreur ?} Sur le test, 7 vrais visages sont classés « fake » et 8 faux sont classés « real ».
-        Les prédictions image par image (\fichier{reports/runs/vit\_s42/preds\_test.csv}) permettent d'examiner ces 15
-        images une à une, ce qui est une piste d'analyse.
+  \item \textbf{Les probabilités sont-elles fiables ?} En distribution, oui : le ViT est le modèle le mieux calibré
+        (ECE de 0,23\,\%), et le temperature scaling ne l'améliore presque pas ($T=0{,}78$, il est même légèrement trop
+        prudent). C'est EfficientNet qui est trop sûr de lui ($T=1{,}22$). Mais une bonne calibration en distribution ne
+        garantit rien hors distribution : sur une image recadrée, le ViT se trompe avec plus de 99\,\% de confiance. La
+        probabilité affichée dans l'interface ne doit donc pas être lue comme une garantie.
+  \item \textbf{Quels cas d'erreur ?} Sur le test, le ViT classe 8 vrais visages « fake » et 3 faux « real » (ViT
+        \texttt{scale} : 4 et 2). Les prédictions image par image (\fichier{reports/runs/vit\_s42/preds\_test.csv}) permettent
+        d'examiner ces images une à une, ce qui est une piste d'analyse.
   \item \textbf{Rigueur du protocole.} Le découpage est fourni par le jeu de données, les augmentations ne touchent que
         l'entraînement, le checkpoint est choisi sur la validation et le test n'est utilisé qu'une fois. Les limites
         restantes : 20\,\% des données d'entraînement utilisées, 3 époques, pas de recherche d'hyperparamètres
@@ -746,7 +766,7 @@ Prometheus et Grafana se lancent avec le profil \texttt{monitoring}. Un test de 
 
 \nomprojet{} livre une chaîne complète : données versionnées, trois architectures comparées, explicabilité exportée avec
 le modèle, API typée et testée, interface interactive, images Docker multi-étapes, intégration continue et suivi des
-expériences avec registre. Le ViT-B/16 est le meilleur modèle (99,62\,\% d'exactitude sur le test, 15 erreurs sur 4\,000), mais il ne généralise pas au second jeu de données (53\,\%, AUC 0,49) : il détecte les visages générés par StyleGAN, pas les retouches ni les images d'autres générateurs.
+expériences avec registre. Le ViT-B/16 est le meilleur modèle (99,72\,\% d'exactitude sur le test, 11 erreurs sur 4\,000, résultat stable sur trois graines), significativement devant EfficientNet et la baseline. Sa variante entraînée avec des recadrages aléatoires (\texttt{scale}) est aussi précise (99,85\,\%) et beaucoup plus robuste au cadrage (98,0\,\% contre 83,3\,\%), au prix d'une moindre robustesse à la compression JPEG. Aucun modèle ne généralise au second jeu de données (53\,\%, AUC proche de 0,5) : ils détectent les visages générés par StyleGAN, pas les retouches ni les images d'autres générateurs.
 
 Perspectives : entraîner sur des images issues de modèles de diffusion récents ; mesurer la généralisation sur des visages générés par diffusion ; intégrer à l'API la température de calibration mesurée en section~\ref{sec:calib} ; poursuivre la réduction de la dépendance au cadrage amorcée par l'augmentation \texttt{scale} (section~\ref{sec:robustesse}), par exemple avec des recadrages plus agressifs ou un entraînement sur des visages non alignés ; séparer l'effet du pré-entraînement et de l'auto-attention par une ablation ; utiliser les 100\,000 images d'entraînement ; ajouter MixUp/CutMix et un
 rééquilibrage de classes, étendre la détection à la vidéo, détecter la dérive de données avec Evidently et déployer sur

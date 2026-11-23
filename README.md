@@ -58,7 +58,7 @@ cd frontend && npm install && npm run dev                # interface sur :3000 (
 |---|---|---|
 | Axe 4 : stratégie de patchification et embeddings de position | ViT-B/16 : grille 14x14 = 196 patchs + token CLS, embeddings de position appris `(1, 197, 768)`, journalisés dans MLflow (`describe_vit`, `src/models/architecture.py`) | Fait |
 | Axe 4 : matrices d'attention (Attention Rollout) affichées dans le frontend | `src/utils/gradcam.py`, exportées DANS l'ONNX (`ViTWithRollout`, sortie `cam`), calque affiché avec curseur de comparaison | Fait (test CI sur ViT tiny) |
-| Benchmark contre une baseline CNN | `notebooks/kaggle_train.ipynb` : baseline CNN, EfficientNet-V2-S, ViT-B/16 | Fait : test 83,6 % / 97,3 % / **99,6 %** (voir « Résultats ») |
+| Benchmark contre une baseline CNN | `notebooks/kaggle_train.ipynb` : baseline CNN, EfficientNet-V2-S, ViT-B/16 | Fait : test 83,6 % / 97,1 % / **99,7 %** (ViT `scale` : 99,85 %) (voir « Résultats ») |
 | Métriques, généralisation | accuracy, F1, ROC-AUC, matrice de confusion, 2e dataset (`src/models/evaluate.py`) | Fait : la généralisation échoue (53 %), limite documentée |
 | Export ONNX + ONNX Runtime, quantification | `src/models/export_onnx.py` : parité PyTorch/ONNX, latence, INT8 (`src/utils/quantize.py`) | Fait (INT8 testé sur le modèle de démo) |
 | FastAPI : `/health` (GPU, version), `/model/metadata`, `/predict`, `/predict/visualize`, Pydantic, 400 / 503 | `backend/app/` | Fait (12 tests) |
@@ -178,16 +178,21 @@ Pour tester vite, dans `params.yaml` : `train_limit: 200`, `val_limit: 100`, `te
 
 ## Résultats
 
-Un seul entraînement par modèle (graine 42), sur 20 000 images d'entraînement, 4 000 de validation et 4 000 de test
+Entraînement de graine 42 (EfficientNet et ViT : aussi graines 1 et 2), sur 20 000 images d'entraînement, 4 000 de validation et 4 000 de test
 (sur 100 000 / 20 000 / 20 000 disponibles). Sources : `metrics/*.json`, MLflow, `reports/`. Détails et analyse : rapport.
 
 | Modèle | Accuracy (val) | F1 (val) | ROC-AUC (val) | Accuracy (test) | Généralisation (2e dataset) | Latence ONNX p50 | INT8 (taille, écart de proba) |
 |---|---|---|---|---|---|---|---|
 | Baseline CNN | 0,840 | 0,842 | 0,919 | 0,836 | 0,539 | 14,5 ms | 0,40 Mo, 0,0002 (plus lent) |
-| EfficientNet-V2-S | 0,968 | 0,968 | 0,996 | 0,973 | 0,524 | 44,0 ms | 22,9 Mo, 0,0001 (plus lent) |
-| **ViT-B/16** | **0,998** | **0,998** | **1,000** | **0,996** | 0,529 | 203,9 ms | 86,9 Mo (au lieu de 343), 0,033, 26 % plus rapide |
+| EfficientNet-V2-S | 0,968 | 0,968 | 0,996 | 0,971 | 0,525 | 44,0 ms | 22,9 Mo, 0,0001 (plus lent) |
+| ViT-B/16 | **0,998** | **0,998** | **1,000** | 0,997 | 0,529 | 193,3 ms | 86,9 Mo (au lieu de 343), 0,059, 26 % plus rapide |
+| **ViT-B/16 `scale`** | **0,998** | **0,998** | **1,000** | **0,999** | 0,530 | idem | idem |
 
-Le ViT commet 15 erreurs sur 4 000 images de test (EfficientNet : 108, baseline : 656). Sur le second jeu de données
+Erreurs sur 4 000 images de test : ViT `scale` 6, ViT 11, EfficientNet 115, baseline 656. Les ViT battent les CNN de façon
+significative (McNemar, p < 10⁻⁴) et stable sur trois graines (ViT : 99,6 ± 0,1 %). Les deux ViT sont équivalents sur le test
+(p = 0,23), mais le ViT `scale` (recadrages aléatoires à l'entraînement) résiste bien mieux au cadrage : 98,0 % contre 83,3 %
+en moyenne sur quatre recadrages, 1 000 images (au prix d'une moindre robustesse à la compression JPEG). C'est le modèle
+recommandé. Sur le second jeu de données
 (photos réelles retouchées), les trois modèles ne font pas mieux que répondre toujours « réel » (53,0 %, AUC proche de 0,5) :
 ils détectent les visages générés par StyleGAN, pas les retouches ni les images d'autres générateurs.
 
@@ -243,8 +248,8 @@ explosion de « FAKE » ou d'images sans visage).
 ## Limites et éthique
 
 - Entraîné sur des visages FFHQ (réels) et StyleGAN (générés) : les images de modèles de diffusion récents ne sont pas couvertes.
-- Entraînement sur 20 000 des 100 000 images disponibles, une seule exécution par modèle (pas de mesure de variabilité entre graines).
-- Aucune généralisation aux retouches ni aux images de modèles de diffusion (second jeu : 53 %, AUC 0,49) ; le modèle dépend du cadrage et du visage entier ; ses probabilités ne sont pas calibrées.
+- Entraînement sur 20 000 des 100 000 images disponibles, 3 époques, sans recherche d'hyperparamètres.
+- Aucune généralisation aux retouches ni aux images de modèles de diffusion (second jeu : 53 %, AUC 0,49) ; le ViT d'origine dépend du cadrage (corrigé en grande partie par la variante `scale`) ; ses probabilités sont bien calibrées en distribution, pas sur des images très différentes.
 - Une photo de webcam diffère des images d'entraînement (éclairage, compression, cadrage) : la précision réelle peut être inférieure.
 - Les cartes d'attention indiquent où le modèle a regardé, pas une preuve de falsification.
 - Un modèle peut se tromper : ne pas utiliser un verdict seul comme preuve.

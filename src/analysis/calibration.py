@@ -139,15 +139,28 @@ def write_latex(results):
         "validation). "
         "Plus c'est bas, mieux c'est. Les prédictions (et donc l'exactitude et l'AUC) sont inchangées.",
     )
-    over = [t for t, r in results.items() if r["temperature"] > 1]
+    over = [t for t, r in results.items() if r["temperature"] > 1.05]
+    under = [t for t, r in results.items() if r["temperature"] < 0.95]
     if over:
         body += (
             "Une température supérieure à 1 signifie que le modèle est \\emph{trop sûr de lui} : ses "
-            "probabilités "
-            "brutes sont trop proches de 0 ou de 1. C'est le cas de "
+            "probabilités brutes sont trop proches de 0 ou de 1. C'est le cas de "
             + ", ".join(latex.name(t) for t in over)
             + ". "
         )
+    if under:
+        body += (
+            "Une température inférieure à 1 signifie au contraire que le modèle est "
+            "\\emph{légèrement trop prudent} : c'est le cas de "
+            + ", ".join(latex.name(t) for t in under)
+            + ". "
+        )
+    best = min(results, key=lambda t: results[t]["before"]["ece"])
+    body += (
+        f"Le modèle le mieux calibré avant correction est {latex.name(best)} "
+        f"(ECE de {latex.pct(results[best]['before']['ece'], 2)}) : sur des images de la même distribution "
+        "que l'entraînement, ses probabilités sont déjà fiables. "
+    )
     body += (
         "La température ne modifie que les probabilités affichées : elle peut être ajoutée à "
         "\\texttt{models/metadata.json} et appliquée par l'API avant le softmax.\n"
