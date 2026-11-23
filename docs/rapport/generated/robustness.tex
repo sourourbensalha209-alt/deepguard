@@ -1,0 +1,28 @@
+% Fichier généré automatiquement par src/analysis : ne pas modifier à la main.
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Dégradation} & \textbf{EfficientNet-V2-S} & \textbf{ViT-B/16} & \textbf{ViT-B/16 (\texttt{scale})} \\
+\midrule
+original & 0{,}968 & 0{,}998 & 0{,}999 \\
+JPEG q50 & 0{,}877 & 0{,}987 & 0{,}933 \\
+JPEG q20 & 0{,}748 & 0{,}946 & 0{,}868 \\
+résolution 64 px & 0{,}545 & 0{,}982 & 0{,}982 \\
+résolution 32 px & 0{,}501 & 0{,}875 & 0{,}881 \\
+flou r=2 & 0{,}548 & 0{,}979 & 0{,}950 \\
+bruit $\sigma$=15 & 0{,}499 & 0{,}942 & 0{,}936 \\
+recadrage 80 \% & 0{,}896 & 0{,}901 & 0{,}995 \\
+recadrage 60 \% & 0{,}686 & 0{,}618 & 0{,}981 \\
+dézoom 80 \% & 0{,}796 & 0{,}946 & 0{,}974 \\
+décalage 10 \% & 0{,}824 & 0{,}867 & 0{,}969 \\
+\bottomrule
+\end{tabular}
+\caption{Exactitude sous dégradation sur 1000 images de test équilibrées (hasard : 0,5).}
+\end{table}
+\begin{itemize}
+\item EfficientNet-V2-S : exactitude 0{,}968 sans dégradation, 0{,}686 au pire cas de cadrage (recadrage 60 \%, rappel des faux 0{,}410).
+\item ViT-B/16 : exactitude 0{,}998 sans dégradation, 0{,}618 au pire cas de cadrage (recadrage 60 \%, rappel des faux 0{,}238).
+\item ViT-B/16 (\texttt{scale}) : exactitude 0{,}999 sans dégradation, 0{,}969 au pire cas de cadrage (décalage 10 \%, rappel des faux 0{,}938).
+\item En moyenne sur les quatre dégradations de cadrage, l'augmentation \texttt{scale} améliore la robustesse du ViT : 0{,}833 $\to$ 0{,}980, pour une exactitude sans dégradation de 0{,}998 $\to$ 0{,}999.
+\end{itemize}

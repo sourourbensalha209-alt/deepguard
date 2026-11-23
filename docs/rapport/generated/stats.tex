@@ -1,0 +1,42 @@
+% Fichier généré automatiquement par src/analysis : ne pas modifier à la main.
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Modèle} & \textbf{Exactitude [IC 95\,\%]} & \textbf{F1 [IC 95\,\%]} & \textbf{AUC [IC 95\,\%]} \\
+\midrule
+Baseline CNN & 0{,}836 [0{,}824 ; 0{,}847] & 0{,}837 [0{,}824 ; 0{,}848] & 0{,}921 [0{,}912 ; 0{,}929] \\
+EfficientNet-V2-S & 0{,}971 [0{,}966 ; 0{,}977] & 0{,}971 [0{,}966 ; 0{,}977] & 0{,}996 [0{,}995 ; 0{,}997] \\
+ViT-B/16 & 0{,}997 [0{,}996 ; 0{,}999] & 0{,}997 [0{,}996 ; 0{,}999] & 1{,}000 [1{,}000 ; 1{,}000] \\
+ViT-B/16 (\texttt{scale}) & 0{,}999 [0{,}997 ; 1{,}000] & 0{,}999 [0{,}997 ; 1{,}000] & 1{,}000 [1{,}000 ; 1{,}000] \\
+\bottomrule
+\end{tabular}
+\caption{Métriques sur le jeu de test avec intervalles de confiance à 95\,\% (bootstrap percentile, 2000 ré-échantillonnages des 4\,000 images, graine d'entraînement 42).}
+\end{table}
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lccc@{}}
+\toprule
+\textbf{Comparaison (A contre B)} & \textbf{Seul A a raison} & \textbf{Seul B a raison} & \textbf{p (McNemar exact)} \\
+\midrule
+ViT-B/16 (\texttt{scale}) contre Baseline CNN & 654 & 4 & $<10^{-4}$ \\
+ViT-B/16 (\texttt{scale}) contre EfficientNet-V2-S & 114 & 5 & $<10^{-4}$ \\
+ViT-B/16 (\texttt{scale}) contre ViT-B/16 & 8 & 3 & 0{,}2266 \\
+\bottomrule
+\end{tabular}
+\caption{Test de McNemar sur les mêmes images de test : l'écart entre deux modèles est significatif si $p<0{,}05$.}
+\end{table}
+L'avantage de ViT-B/16 (\texttt{scale}) sur Baseline CNN, EfficientNet-V2-S est statistiquement significatif (McNemar, $p<0{,}05$) : il ne s'explique pas par le hasard de l'échantillon de test. En revanche, l'écart avec ViT-B/16 n'est pas significatif : les deux modèles sont équivalents sur ce jeu de test. 
+
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Modèle} & \textbf{Graines} & \textbf{Exactitude} & \textbf{F1} & \textbf{AUC} \\
+\midrule
+EfficientNet-V2-S & 1, 2, 42 & 0{,}973 $\pm$ 0{,}001 & 0{,}973 $\pm$ 0{,}001 & 0{,}997 $\pm$ 0{,}001 \\
+ViT-B/16 & 1, 2, 42 & 0{,}996 $\pm$ 0{,}001 & 0{,}997 $\pm$ 0{,}001 & 1{,}000 $\pm$ 0{,}000 \\
+\bottomrule
+\end{tabular}
+\caption{Variabilité entre entraînements : moyenne $\pm$ écart-type sur le jeu de test pour plusieurs graines.}
+\end{table}

@@ -1,0 +1,16 @@
+% Fichier généré automatiquement par src/analysis : ne pas modifier à la main.
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Modèle} & \textbf{T} & \textbf{ECE} & \textbf{NLL} & \textbf{Brier} \\
+\midrule
+Baseline CNN & 0{,}80 & 0{,}0308 $\to$ 0{,}0104 & 0{,}3633 $\to$ 0{,}3574 & 0{,}1143 $\to$ 0{,}1134 \\
+EfficientNet-V2-S & 1{,}22 & 0{,}0100 $\to$ 0{,}0075 & 0{,}0800 $\to$ 0{,}0784 & 0{,}0221 $\to$ 0{,}0221 \\
+ViT-B/16 & 0{,}78 & 0{,}0023 $\to$ 0{,}0019 & 0{,}0068 $\to$ 0{,}0069 & 0{,}0020 $\to$ 0{,}0021 \\
+ViT-B/16 (\texttt{scale}) & 0{,}80 & 0{,}0028 $\to$ 0{,}0020 & 0{,}0047 $\to$ 0{,}0045 & 0{,}0013 $\to$ 0{,}0013 \\
+\bottomrule
+\end{tabular}
+\caption{Calibration sur le jeu de test, avant $\to$ après temperature scaling (T apprise sur la validation). Plus c'est bas, mieux c'est. Les prédictions (et donc l'exactitude et l'AUC) sont inchangées.}
+\end{table}
+Une température supérieure à 1 signifie que le modèle est \emph{trop sûr de lui} : ses probabilités brutes sont trop proches de 0 ou de 1. C'est le cas de EfficientNet-V2-S. La température ne modifie que les probabilités affichées : elle peut être ajoutée à \texttt{models/metadata.json} et appliquée par l'API avant le softmax.

@@ -1,0 +1,12 @@
+{
+  "model": "vit",
+  "augment": "basic",
+  "seed": 42,
+  "run_id": "27ce9bb5191342df891380c826eaeedf",
+  "git_sha": "a0eb7d8",
+  "n_params_m": 85.8,
+  "train_time_s": 563,
+  "val_accuracy": 0.9982,
+  "val_f1": 0.9983,
+  "val_roc_auc": 1.0
+}

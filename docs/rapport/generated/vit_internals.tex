@@ -1,0 +1,6 @@
+% Fichier généré automatiquement par src/analysis : ne pas modifier à la main.
+\begin{itemize}
+\item \textbf{Embeddings de position.} La similarité cosinus moyenne entre un patch et ses 4 voisins directs est de 0{,}82, contre -0{,}08 avec les patchs éloignés (distance de Manhattan $>4$). Les embeddings de position sont de simples vecteurs appris (pré-entraînés sur ImageNet puis ajustés au fine-tuning), sans notion de 2D imposée : la structure en lignes et colonnes de la figure montre que le modèle a appris seul la géométrie de l'image.
+\item \textbf{Distance d'attention.} Dès la première couche, les têtes regardent entre 23 et 118 pixels en moyenne : certaines sont locales (comme un filtre de convolution), d'autres globales. Dans la dernière couche, la distance moyenne est de 130 pixels. Un CNN ne peut pas relier deux régions éloignées avant ses dernières couches ; le ViT le peut dès le début, ce qui l'aide à repérer des incohérences globales (symétrie, arrière-plan, éclairage) typiques des images générées.
+\item \textbf{Effet du fine-tuning.} Par rapport aux poids ImageNet, le changement le plus fort de distance moyenne est à la couche 4 (-7 pixels) : c'est là que l'adaptation à la détection de deepfakes modifie le plus la manière de regarder.
+\end{itemize}

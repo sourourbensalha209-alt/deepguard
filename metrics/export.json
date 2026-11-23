@@ -1,0 +1,11 @@
+{
+  "parity_max_diff": 2e-06,
+  "onnx_size_mb": 343.33,
+  "torch_cpu_p50_ms": 229.0,
+  "torch_cpu_p95_ms": 243.7,
+  "onnx_cpu_p50_ms": 193.3,
+  "onnx_cpu_p95_ms": 202.5,
+  "int8_size_mb": 86.87,
+  "int8_onnx_cpu_p50_ms": 142.5,
+  "int8_max_prob_diff": 0.059
+}

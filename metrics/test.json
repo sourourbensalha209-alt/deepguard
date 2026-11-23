@@ -1,0 +1,10 @@
+{
+  "test_accuracy": 0.9972,
+  "test_f1": 0.9973,
+  "test_roc_auc": 1.0,
+  "test_errors": 11.0,
+  "test_n": 4000.0,
+  "external_accuracy": 0.5287,
+  "external_f1": 0.0,
+  "external_roc_auc": 0.4999
+}

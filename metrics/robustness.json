@@ -1,0 +1,248 @@
+{
+  "efficientnet": {
+    "n_images": 1000,
+    "results": {
+      "original": {
+        "accuracy": 0.968,
+        "f1": 0.9677,
+        "roc_auc": 0.9952,
+        "fake_recall": 0.96,
+        "real_recall": 0.976
+      },
+      "JPEG q50": {
+        "accuracy": 0.877,
+        "f1": 0.8805,
+        "roc_auc": 0.9479,
+        "fake_recall": 0.906,
+        "real_recall": 0.848
+      },
+      "JPEG q20": {
+        "accuracy": 0.748,
+        "f1": 0.7188,
+        "roc_auc": 0.8525,
+        "fake_recall": 0.644,
+        "real_recall": 0.852
+      },
+      "résolution 64 px": {
+        "accuracy": 0.545,
+        "f1": 0.1712,
+        "roc_auc": 0.8639,
+        "fake_recall": 0.094,
+        "real_recall": 0.996
+      },
+      "résolution 32 px": {
+        "accuracy": 0.501,
+        "f1": 0.0158,
+        "roc_auc": 0.6295,
+        "fake_recall": 0.008,
+        "real_recall": 0.994
+      },
+      "flou r=2": {
+        "accuracy": 0.548,
+        "f1": 0.1782,
+        "roc_auc": 0.8699,
+        "fake_recall": 0.098,
+        "real_recall": 0.998
+      },
+      "bruit σ=15": {
+        "accuracy": 0.499,
+        "f1": 0.0,
+        "roc_auc": 0.5042,
+        "fake_recall": 0.0,
+        "real_recall": 0.998
+      },
+      "recadrage 80 %": {
+        "accuracy": 0.896,
+        "f1": 0.8921,
+        "roc_auc": 0.9701,
+        "fake_recall": 0.86,
+        "real_recall": 0.932
+      },
+      "recadrage 60 %": {
+        "accuracy": 0.686,
+        "f1": 0.5663,
+        "roc_auc": 0.8629,
+        "fake_recall": 0.41,
+        "real_recall": 0.962
+      },
+      "dézoom 80 %": {
+        "accuracy": 0.796,
+        "f1": 0.753,
+        "roc_auc": 0.9408,
+        "fake_recall": 0.622,
+        "real_recall": 0.97
+      },
+      "décalage 10 %": {
+        "accuracy": 0.824,
+        "f1": 0.7905,
+        "roc_auc": 0.9684,
+        "fake_recall": 0.664,
+        "real_recall": 0.984
+      }
+    }
+  },
+  "vit": {
+    "n_images": 1000,
+    "results": {
+      "original": {
+        "accuracy": 0.998,
+        "f1": 0.998,
+        "roc_auc": 1.0,
+        "fake_recall": 1.0,
+        "real_recall": 0.996
+      },
+      "JPEG q50": {
+        "accuracy": 0.987,
+        "f1": 0.9872,
+        "roc_auc": 0.9999,
+        "fake_recall": 1.0,
+        "real_recall": 0.974
+      },
+      "JPEG q20": {
+        "accuracy": 0.946,
+        "f1": 0.9473,
+        "roc_auc": 0.9917,
+        "fake_recall": 0.97,
+        "real_recall": 0.922
+      },
+      "résolution 64 px": {
+        "accuracy": 0.982,
+        "f1": 0.9822,
+        "roc_auc": 0.999,
+        "fake_recall": 0.992,
+        "real_recall": 0.972
+      },
+      "résolution 32 px": {
+        "accuracy": 0.875,
+        "f1": 0.8619,
+        "roc_auc": 0.9635,
+        "fake_recall": 0.78,
+        "real_recall": 0.97
+      },
+      "flou r=2": {
+        "accuracy": 0.979,
+        "f1": 0.9789,
+        "roc_auc": 0.9986,
+        "fake_recall": 0.972,
+        "real_recall": 0.986
+      },
+      "bruit σ=15": {
+        "accuracy": 0.942,
+        "f1": 0.9451,
+        "roc_auc": 0.9959,
+        "fake_recall": 0.998,
+        "real_recall": 0.886
+      },
+      "recadrage 80 %": {
+        "accuracy": 0.901,
+        "f1": 0.8901,
+        "roc_auc": 0.9932,
+        "fake_recall": 0.802,
+        "real_recall": 1.0
+      },
+      "recadrage 60 %": {
+        "accuracy": 0.618,
+        "f1": 0.3839,
+        "roc_auc": 0.9449,
+        "fake_recall": 0.238,
+        "real_recall": 0.998
+      },
+      "dézoom 80 %": {
+        "accuracy": 0.946,
+        "f1": 0.9432,
+        "roc_auc": 0.9979,
+        "fake_recall": 0.896,
+        "real_recall": 0.996
+      },
+      "décalage 10 %": {
+        "accuracy": 0.867,
+        "f1": 0.847,
+        "roc_auc": 0.9911,
+        "fake_recall": 0.736,
+        "real_recall": 0.998
+      }
+    }
+  },
+  "vit_scale": {
+    "n_images": 1000,
+    "results": {
+      "original": {
+        "accuracy": 0.999,
+        "f1": 0.999,
+        "roc_auc": 1.0,
+        "fake_recall": 0.998,
+        "real_recall": 1.0
+      },
+      "JPEG q50": {
+        "accuracy": 0.933,
+        "f1": 0.9372,
+        "roc_auc": 0.9996,
+        "fake_recall": 1.0,
+        "real_recall": 0.866
+      },
+      "JPEG q20": {
+        "accuracy": 0.868,
+        "f1": 0.8832,
+        "roc_auc": 0.9901,
+        "fake_recall": 0.998,
+        "real_recall": 0.738
+      },
+      "résolution 64 px": {
+        "accuracy": 0.982,
+        "f1": 0.9821,
+        "roc_auc": 0.9992,
+        "fake_recall": 0.99,
+        "real_recall": 0.974
+      },
+      "résolution 32 px": {
+        "accuracy": 0.881,
+        "f1": 0.8714,
+        "roc_auc": 0.9638,
+        "fake_recall": 0.806,
+        "real_recall": 0.956
+      },
+      "flou r=2": {
+        "accuracy": 0.95,
+        "f1": 0.9476,
+        "roc_auc": 0.9978,
+        "fake_recall": 0.904,
+        "real_recall": 0.996
+      },
+      "bruit σ=15": {
+        "accuracy": 0.936,
+        "f1": 0.9396,
+        "roc_auc": 0.9951,
+        "fake_recall": 0.996,
+        "real_recall": 0.876
+      },
+      "recadrage 80 %": {
+        "accuracy": 0.995,
+        "f1": 0.995,
+        "roc_auc": 0.9999,
+        "fake_recall": 0.996,
+        "real_recall": 0.994
+      },
+      "recadrage 60 %": {
+        "accuracy": 0.981,
+        "f1": 0.981,
+        "roc_auc": 0.9988,
+        "fake_recall": 0.98,
+        "real_recall": 0.982
+      },
+      "dézoom 80 %": {
+        "accuracy": 0.974,
+        "f1": 0.9733,
+        "roc_auc": 0.9993,
+        "fake_recall": 0.948,
+        "real_recall": 1.0
+      },
+      "décalage 10 %": {
+        "accuracy": 0.969,
+        "f1": 0.968,
+        "roc_auc": 0.9993,
+        "fake_recall": 0.938,
+        "real_recall": 1.0
+      }
+    }
+  }
+}
